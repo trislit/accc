@@ -3,7 +3,8 @@
 import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount } from "wagmi";
+import { getWalletClient } from "wagmi/actions";
 import { Atmosphere } from "@/components/art/Atmosphere";
 import { NftAccountPanel } from "@/components/account/NftAccountPanel";
 import {
@@ -14,6 +15,7 @@ import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Tabs";
+import { robinhoodTestnet } from "@/lib/chain";
 import { acccTokenAbi } from "@/lib/contracts";
 import {
   useAcccBalance,
@@ -22,15 +24,15 @@ import {
   useTbaAddress,
 } from "@/lib/data/onchain";
 import { ethToUsd, formatUsd } from "@/lib/format";
-import { liveContracts, project, tokenLabel } from "@/lib/project";
+import { LIVE_NFT, LIVE_TOKEN, liveContracts, project, tokenLabel } from "@/lib/project";
 import { ZERO_ADDRESS } from "@/lib/tba";
+import { wagmiConfig } from "@/lib/wagmi";
 import type { NftAccount, TokenAsset } from "@/lib/types";
 
 function AccountInner() {
   const params = useSearchParams();
   const tokenId = params.get("tokenId") ?? "";
   const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
   const ownerQuery = useNftOwner(tokenId || undefined);
   const tbaQuery = useTbaAddress(tokenId || undefined);
   const tbaEth = useNativeEthBalance(tbaQuery.address);
@@ -60,7 +62,7 @@ function AccountInner() {
         kind: "token",
         symbol: project.tokenSymbol,
         name: project.tokenName,
-        contract: project.tokenContract,
+        contract: LIVE_TOKEN,
         balance: tbaToken.formatted,
         estimatedValueUsd: tbaToken.formatted * project.tokenPriceUsd,
       });
@@ -71,7 +73,7 @@ function AccountInner() {
     );
     return {
       address: tbaQuery.address,
-      nft: { contract: project.nftContract, tokenId },
+      nft: { contract: LIVE_NFT, tokenId },
       controller: ownerQuery.owner ?? ZERO_ADDRESS,
       assets,
       estimatedTokenValue,
@@ -88,11 +90,16 @@ function AccountInner() {
 
   function onFaucet() {
     faucetTx.start(`Get test ${tokenLabel()}`, 0, async () => {
+      const walletClient = await getWalletClient(wagmiConfig, {
+        chainId: robinhoodTestnet.id,
+      });
       if (!walletClient) throw new Error("Wallet is not ready.");
       return walletClient.writeContract({
-        address: project.tokenContract,
+        address: LIVE_TOKEN,
         abi: acccTokenAbi,
         functionName: "faucet",
+        chain: robinhoodTestnet,
+        account: walletClient.account,
       });
     });
   }
@@ -115,11 +122,20 @@ function AccountInner() {
     );
   }
 
-  if (ownerQuery.error && !ownerQuery.isLoading) {
+  if (ownerQuery.isLoading) {
+    return (
+      <EmptyState
+        title={`Loading ACCC #${tokenId}`}
+        body="Reading this NFT from Robinhood Chain testnet."
+      />
+    );
+  }
+
+  if (ownerQuery.error) {
     return (
       <EmptyState
         title={`ACCC #${tokenId} not found`}
-        body="This token ID is not minted on the live collection contract."
+        body={ownerQuery.error}
       />
     );
   }

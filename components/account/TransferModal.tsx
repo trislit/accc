@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { encodeFunctionData, parseEther, parseUnits } from "viem";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount } from "wagmi";
+import { getWalletClient } from "wagmi/actions";
 import {
   TransactionModal,
   useOnchainTransaction,
@@ -10,9 +11,11 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { acccTokenAbi, erc6551AccountAbi } from "@/lib/contracts";
+import { robinhoodTestnet } from "@/lib/chain";
 import { useAcccBalance, useNativeEthBalance } from "@/lib/data/onchain";
 import { formatEth, formatTokenAmount } from "@/lib/format";
-import { project, tokenLabel } from "@/lib/project";
+import { LIVE_TOKEN, tokenLabel } from "@/lib/project";
+import { wagmiConfig } from "@/lib/wagmi";
 import type { Address } from "@/lib/types";
 
 type Asset = "eth" | "accc";
@@ -32,7 +35,6 @@ export function TransferModal({
   onSuccess?: () => void;
 }) {
   const { address } = useAccount();
-  const { data: walletClient } = useWalletClient();
   const [asset, setAsset] = useState<Asset>("accc");
   const [amount, setAmount] = useState("");
   const tx = useOnchainTransaction();
@@ -54,29 +56,42 @@ export function TransferModal({
   const numeric = Number(amount);
 
   async function send() {
-    if (!walletClient || !address || !tba) {
+    if (!address || !tba) {
       throw new Error("Connect a wallet first.");
     }
+    const walletClient = await getWalletClient(wagmiConfig, {
+      chainId: robinhoodTestnet.id,
+    });
+    if (!walletClient) throw new Error("Wallet is not ready.");
     if (asset === "eth") {
       const value = parseEther(amount);
       if (mode === "deposit") {
-        return walletClient.sendTransaction({ to: tba, value });
+        return walletClient.sendTransaction({
+          to: tba,
+          value,
+          chain: robinhoodTestnet,
+          account: walletClient.account,
+        });
       }
       return walletClient.writeContract({
         address: tba,
         abi: erc6551AccountAbi,
         functionName: "execute",
         args: [address, value, "0x", 0],
+        chain: robinhoodTestnet,
+        account: walletClient.account,
       });
     }
 
     const value = parseUnits(amount, 18);
     if (mode === "deposit") {
       return walletClient.writeContract({
-        address: project.tokenContract,
+        address: LIVE_TOKEN,
         abi: acccTokenAbi,
         functionName: "transfer",
         args: [tba, value],
+        chain: robinhoodTestnet,
+        account: walletClient.account,
       });
     }
     return walletClient.writeContract({
@@ -84,7 +99,7 @@ export function TransferModal({
       abi: erc6551AccountAbi,
       functionName: "execute",
       args: [
-        project.tokenContract,
+        LIVE_TOKEN,
         BigInt(0),
         encodeFunctionData({
           abi: acccTokenAbi,
@@ -93,6 +108,8 @@ export function TransferModal({
         }),
         0,
       ],
+      chain: robinhoodTestnet,
+      account: walletClient.account,
     });
   }
 

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { erc20Abi, formatEther, formatUnits } from "viem";
-import { useAccount, useBalance, useReadContract, useReadContracts } from "wagmi";
+import { useAccount, useReadContracts } from "wagmi";
 import {
   ROBINHOOD_TESTNET_ID,
   acccPublicClient,
@@ -23,77 +23,97 @@ export function useConnectedWallet() {
 }
 
 export function useNativeEthBalance(address?: Address) {
-  const { data, error, isLoading, refetch } = useBalance({
-    address,
-    chainId: ROBINHOOD_TESTNET_ID,
-    query: { enabled: Boolean(address) },
+  const query = useQuery({
+    queryKey: ["accc-eth", ROBINHOOD_TESTNET_ID, address],
+    enabled: Boolean(address),
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!address) throw new Error("No address");
+      return acccPublicClient.getBalance({ address });
+    },
   });
 
   return {
-    wei: data?.value,
-    formatted: data ? Number(formatEther(data.value)) : undefined,
-    isLoading,
-    error: error?.message,
-    refetch,
+    wei: query.data,
+    formatted: query.data !== undefined ? Number(formatEther(query.data)) : undefined,
+    isLoading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
   };
 }
 
 export function useAcccBalance(holder?: Address) {
-  const enabled = Boolean(liveContracts && holder);
-  const { data, error, isLoading, refetch } = useReadContract({
-    address: LIVE_TOKEN,
-    abi: acccTokenAbi,
-    functionName: "balanceOf",
-    args: holder ? [holder] : undefined,
-    chainId: ROBINHOOD_TESTNET_ID,
-    query: { enabled },
+  const query = useQuery({
+    queryKey: ["accc-token", ROBINHOOD_TESTNET_ID, LIVE_TOKEN, holder],
+    enabled: Boolean(liveContracts && holder),
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!holder) throw new Error("No holder");
+      return acccPublicClient.readContract({
+        address: LIVE_TOKEN,
+        abi: acccTokenAbi,
+        functionName: "balanceOf",
+        args: [holder],
+      });
+    },
   });
 
   return {
     configured: liveContracts,
-    wei: data,
-    formatted: data !== undefined ? Number(formatUnits(data, 18)) : undefined,
-    isLoading,
-    error: error?.message,
-    refetch,
+    wei: query.data,
+    formatted:
+      query.data !== undefined ? Number(formatUnits(query.data, 18)) : undefined,
+    isLoading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
   };
 }
 
 export function useNftOwner(tokenId?: string) {
-  const enabled = Boolean(liveContracts && tokenId);
-  const { data, error, isLoading, refetch } = useReadContract({
-    address: LIVE_NFT,
-    abi: acccNftAbi,
-    functionName: "ownerOf",
-    args: tokenId ? [BigInt(tokenId)] : undefined,
-    chainId: ROBINHOOD_TESTNET_ID,
-    query: { enabled },
+  const query = useQuery({
+    queryKey: ["accc-owner", ROBINHOOD_TESTNET_ID, LIVE_NFT, tokenId],
+    enabled: Boolean(liveContracts && tokenId),
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!tokenId) throw new Error("No token");
+      return acccPublicClient.readContract({
+        address: LIVE_NFT,
+        abi: acccNftAbi,
+        functionName: "ownerOf",
+        args: [BigInt(tokenId)],
+      });
+    },
   });
 
   return {
-    owner: data as Address | undefined,
-    isLoading,
-    error: error?.message,
-    refetch,
+    owner: query.data as Address | undefined,
+    isLoading: query.isLoading || query.isFetching,
+    error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
   };
 }
 
 export function useTbaAddress(tokenId?: string) {
-  const enabled = Boolean(liveContracts && tokenId);
-  const { data, error, isLoading, refetch } = useReadContract({
-    address: LIVE_NFT,
-    abi: acccNftAbi,
-    functionName: "accountOf",
-    args: tokenId ? [BigInt(tokenId)] : undefined,
-    chainId: ROBINHOOD_TESTNET_ID,
-    query: { enabled },
+  const query = useQuery({
+    queryKey: ["accc-tba", ROBINHOOD_TESTNET_ID, LIVE_NFT, tokenId],
+    enabled: Boolean(liveContracts && tokenId),
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!tokenId) throw new Error("No token");
+      return acccPublicClient.readContract({
+        address: LIVE_NFT,
+        abi: acccNftAbi,
+        functionName: "accountOf",
+        args: [BigInt(tokenId)],
+      });
+    },
   });
 
   return {
-    address: data as Address | undefined,
-    isLoading,
-    error: error?.message,
-    refetch,
+    address: query.data as Address | undefined,
+    isLoading: query.isLoading || query.isFetching,
+    error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
   };
 }
 
