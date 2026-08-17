@@ -1,13 +1,26 @@
-import { notFound } from "next/navigation";
-import { NftView } from "@/components/pages/NftView";
-import { getNft, nfts } from "@/lib/data/catalog";
+import { redirect } from "next/navigation";
+import { LIVE_NFT } from "@/lib/project";
+import { fetchLiveCollection } from "@/lib/data/scanCollection";
+import { accountPath } from "@/lib/tba";
 
-export function generateStaticParams() {
-  return nfts.map((nft) => ({
-    chain: String(nft.chainId),
-    contract: nft.contract,
-    tokenId: nft.tokenId,
-  }));
+export async function generateStaticParams() {
+  try {
+    const collection = await fetchLiveCollection();
+    return collection.nfts.flatMap((nft) => [
+      {
+        chain: String(nft.chainId),
+        contract: nft.contract,
+        tokenId: nft.tokenId,
+      },
+      {
+        chain: String(nft.chainId),
+        contract: LIVE_NFT.toLowerCase(),
+        tokenId: nft.tokenId,
+      },
+    ]);
+  } catch {
+    return [];
+  }
 }
 
 export default async function NftPage({
@@ -15,8 +28,6 @@ export default async function NftPage({
 }: {
   params: Promise<{ chain: string; contract: string; tokenId: string }>;
 }) {
-  const { chain, contract, tokenId } = await params;
-  const nft = getNft(chain, contract, tokenId);
-  if (!nft) notFound();
-  return <NftView nft={nft} />;
+  const { tokenId } = await params;
+  redirect(accountPath(tokenId));
 }

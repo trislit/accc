@@ -7,102 +7,80 @@ import { NFTCard } from "@/components/cards/NFTCard";
 import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, Tabs } from "@/components/ui/Tabs";
-import {
-  DEMO_OWNER,
-  accountNfts,
-  activity,
-  nftsOwnedBy,
-  portfolioDemo,
-} from "@/lib/data/catalog";
-import { holdingPath } from "@/lib/holdings";
-import { useHoldings } from "@/lib/useHoldings";
 import { useAcccBalance, useNativeEthBalance, useOwnedAcccNfts } from "@/lib/data/onchain";
-import { ethToUsd, formatEth, formatTokenAmount, formatUsd } from "@/lib/format";
-import { liveContracts, project, tokenLabel } from "@/lib/project";
+import { useLiveCollection } from "@/lib/data/liveCollection";
+import { formatEth, formatTokenAmount } from "@/lib/format";
+import { LIVE_TOKEN, project, tokenLabel } from "@/lib/project";
 import { accountPath } from "@/lib/tba";
 import type { Address, CollectionNFT } from "@/lib/types";
 
+function containedAccc(nft: CollectionNFT) {
+  const asset = nft.nftAccount?.assets.find(
+    (item) => item.kind === "token" && item.symbol === project.tokenSymbol,
+  );
+  return asset && asset.kind === "token" ? asset.balance : 0;
+}
+
 export default function PortfolioPage() {
   const { address, isConnected } = useAccount();
-  const wallet = (isConnected && address ? address : DEMO_OWNER) as Address;
   const eth = useNativeEthBalance(isConnected ? address : undefined);
-  const walletAccc = useAcccBalance(isConnected && liveContracts ? address : undefined);
+  const walletAccc = useAcccBalance(isConnected ? address : undefined);
   const [tab, setTab] = useState("overview");
-  const holdings = useHoldings(address);
-  const onchain = useOwnedAcccNfts(liveContracts && address ? address : undefined);
-  const example = !isConnected;
-  const useLiveHoldings = Boolean(liveContracts && isConnected && address);
-  const owned = example
-    ? nftsOwnedBy(DEMO_OWNER)
-    : useLiveHoldings
-      ? onchain.nfts
-      : address
-        ? holdings.map((holding) => holding.nft)
-        : [];
-  const ownedHrefs = example
-    ? undefined
-    : useLiveHoldings
-      ? Object.fromEntries(
-          onchain.nfts.map((nft) => [
-            `${nft.contract}-${nft.tokenId}`,
-            accountPath(nft.tokenId),
-          ]),
-        )
-      : Object.fromEntries(
-          holdings.map((holding) => [
-            `${holding.nft.contract}-${holding.nft.tokenId}`,
-            holdingPath(holding.id),
-          ]),
-        );
-  const accounts = example
-    ? accountNfts(DEMO_OWNER)
-    : useLiveHoldings
-      ? onchain.nfts
-      : holdings.map((holding) => holding.nft).filter((nft) => nft.nftAccount);
-  const liveEthUsd = eth.formatted ? ethToUsd(eth.formatted) : 0;
-  const nftsUsd = example
-    ? owned.reduce(
-        (sum, nft) => sum + ethToUsd(nft.market?.listing?.priceEth ?? 0),
-        0,
-      )
-    : holdings.reduce((sum, holding) => sum + ethToUsd(holding.mintPriceEth), 0);
-  const accountsUsd = accounts.reduce(
-    (sum, nft) => sum + (nft.nftAccount?.estimatedTotalValue ?? 0),
-    0,
+  const onchain = useOwnedAcccNfts(isConnected ? address : undefined);
+  const collection = useLiveCollection();
+  const owned = isConnected ? onchain.nfts : [];
+  const ownedHrefs = Object.fromEntries(
+    owned.map((nft) => [`${nft.contract}-${nft.tokenId}`, accountPath(nft.tokenId)]),
   );
-  const tokensUsd = example
-    ? portfolioDemo.tokens.reduce((sum, token) => sum + token.valueUsd, 0)
-    : 0;
-  const total = nftsUsd + accountsUsd + tokensUsd + liveEthUsd;
+  const accountAccc = owned.reduce((sum, nft) => sum + containedAccc(nft), 0);
+  const activity = (collection.data?.activity ?? []).filter((item) => {
+    if (!address) return false;
+    const mine = address.toLowerCase();
+    return (
+      item.from?.toLowerCase() === mine ||
+      item.to?.toLowerCase() === mine ||
+      owned.some((nft) => item.href === accountPath(nft.tokenId))
+    );
+  });
 
   const tokenRows = useMemo(() => {
     const rows: {
       symbol: string;
-      name: string;
       balance: number;
-      valueUsd: number;
       contract: Address;
-    }[] = example ? [...portfolioDemo.tokens] : [];
+    }[] = [];
     if (isConnected && eth.formatted !== undefined) {
-      rows.unshift({
+      rows.push({
         symbol: "ETH",
-        name: "Ether",
         balance: Number(eth.formatted.toFixed(4)),
-        valueUsd: liveEthUsd,
-        contract: "0x0000000000000000000000000000000000000000" as Address,
+        contract: "0x0000000000000000000000000000000000000000",
       });
     }
     if (isConnected && walletAccc.formatted) {
       rows.push({
         symbol: project.tokenSymbol,
-        name: project.tokenName,
         balance: walletAccc.formatted,
-        valueUsd: walletAccc.formatted * project.tokenPriceUsd,
-        contract: project.tokenContract,
+        contract: LIVE_TOKEN,
+      });
+    }
+    if (accountAccc > 0) {
+      rows.push({
+        symbol: `${project.tokenSymbol} in accounts`,
+        balance: accountAccc,
+        contract: LIVE_TOKEN,
       });
     }
     return rows;
-  }, [eth.formatted, example, isConnected, liveEthUsd, walletAccc.formatted]);
+  }, [accountAccc, eth.formatted, isConnected, walletAccc.formatted]);
+
+  if (!isConnected) {
+    return (
+      <EmptyState
+        title="Connect to see your portfolio"
+        body={`Minted ${project.nftPrefix} NFTs and ${tokenLabel()} in their NFT Accounts appear here.`}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -111,23 +89,19 @@ export default function PortfolioPage() {
           MY PORTFOLIO
         </p>
         <h1 className="mt-2 text-[32px] font-semibold leading-10">
-          {isConnected ? `Your ${project.name} portfolio` : `Example ${project.name} portfolio`}
+          Your {project.name} portfolio
         </h1>
         <div className="mt-2">
-          <AddressDisplay address={wallet} />
+          <AddressDisplay address={address ?? ""} />
         </div>
-        <p className="mt-6 text-xs text-text-muted">Estimated portfolio value</p>
-        <p className="tabular text-4xl font-semibold">{formatUsd(total)}</p>
-        <p className="mt-2 max-w-2xl text-sm text-text-muted">
-          This site only tracks {project.collectionName} so each NFT can show its
-          NFT Account and contained {tokenLabel()}.
+        <p className="mt-6 text-xs text-text-muted">NFT Account {tokenLabel()}</p>
+        <p className="tabular text-4xl font-semibold">
+          {formatTokenAmount(accountAccc)} {tokenLabel()}
         </p>
-        {example ? (
-          <p className="mt-2 text-sm text-text-muted">
-            This is sample collection holdings. Connect a wallet to see NFTs you
-            minted here.
-          </p>
-        ) : null}
+        <p className="mt-2 max-w-2xl text-sm text-text-muted">
+          Live {project.collectionName} on Robinhood testnet. Each NFT shows the
+          {tokenLabel()} held by its NFT Account.
+        </p>
       </div>
 
       <Tabs
@@ -144,23 +118,28 @@ export default function PortfolioPage() {
 
       {tab === "overview" ? (
         <div className="space-y-8">
-          <div className="grid gap-3 sm:grid-cols-4">
-            <Stat label="Total value" value={formatUsd(total)} />
-            <Stat label="NFTs" value={formatUsd(nftsUsd)} />
-            <Stat label="Tokens" value={formatUsd(tokensUsd + liveEthUsd)} />
-            <Stat label="NFT Accounts" value={formatUsd(accountsUsd)} />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Stat label="NFTs" value={String(owned.length)} />
+            <Stat
+              label={`${tokenLabel()} in accounts`}
+              value={formatTokenAmount(accountAccc)}
+            />
+            <Stat
+              label={`Wallet ${tokenLabel()}`}
+              value={formatTokenAmount(walletAccc.formatted ?? 0)}
+            />
           </div>
           <NftSection
             owned={owned}
             hrefs={ownedHrefs}
-            loading={Boolean(useLiveHoldings && onchain.isLoading)}
-            error={useLiveHoldings ? onchain.error : undefined}
+            loading={onchain.isLoading}
+            error={onchain.error}
           />
-          <TokenTable rows={tokenRows} empty={isConnected && tokenRows.length === 0} />
+          <TokenTable rows={tokenRows} empty={tokenRows.length === 0} />
           <AccountsTable
-            accounts={accounts}
+            accounts={owned}
             hrefs={ownedHrefs}
-            loading={Boolean(useLiveHoldings && onchain.isLoading)}
+            loading={onchain.isLoading}
           />
         </div>
       ) : null}
@@ -169,38 +148,24 @@ export default function PortfolioPage() {
         <NftSection
           owned={owned}
           hrefs={ownedHrefs}
-          loading={Boolean(useLiveHoldings && onchain.isLoading)}
-          error={useLiveHoldings ? onchain.error : undefined}
+          loading={onchain.isLoading}
+          error={onchain.error}
         />
       ) : null}
 
       {tab === "tokens" ? (
-        <TokenTable rows={tokenRows} empty={isConnected && tokenRows.length === 0} />
+        <TokenTable rows={tokenRows} empty={tokenRows.length === 0} />
       ) : null}
 
       {tab === "accounts" ? (
         <AccountsTable
-          accounts={accounts}
+          accounts={owned}
           hrefs={ownedHrefs}
-          loading={Boolean(useLiveHoldings && onchain.isLoading)}
+          loading={onchain.isLoading}
         />
       ) : null}
 
-      {tab === "activity" ? (
-        <ActivityList
-          items={
-            example
-              ? activity
-              : holdings.map((holding) => ({
-                  id: holding.id,
-                  type: "Mint" as const,
-                  title: holding.nft.name,
-                  amount: `${holding.mintPriceEth.toFixed(2)} ETH`,
-                  at: new Date(holding.mintedAt).toLocaleString(),
-                }))
-          }
-        />
-      ) : null}
+      {tab === "activity" ? <ActivityList items={activity} /> : null}
     </div>
   );
 }
@@ -225,12 +190,7 @@ function NftSection({
     );
   }
   if (error && owned.length === 0) {
-    return (
-      <EmptyCollection
-        title="Could not load NFTs"
-        body={error}
-      />
-    );
+    return <EmptyCollection title="Could not load NFTs" body={error} />;
   }
   if (owned.length === 0) {
     return (
@@ -265,9 +225,9 @@ function EmptyCollection({ title, body }: { title: string; body: string }) {
         <Link href="/mint/">
           <Button size="sm">Mint</Button>
         </Link>
-        <Link href="/market/">
+        <Link href="/collection/">
           <Button variant="secondary" size="sm">
-            Market
+            Collection
           </Button>
         </Link>
       </div>
@@ -288,14 +248,14 @@ function TokenTable({
   rows,
   empty,
 }: {
-  rows: { symbol: string; balance: number; valueUsd: number }[];
+  rows: { symbol: string; balance: number }[];
   empty?: boolean;
 }) {
   if (empty || !rows.length) {
     return (
       <EmptyCollection
         title={`No ${tokenLabel()}`}
-        body={`${tokenLabel()} claimed into NFT Accounts, plus ETH when connected, will appear here.`}
+        body={`${tokenLabel()} in your wallet or NFT Accounts will appear here.`}
       />
     );
   }
@@ -304,26 +264,26 @@ function TokenTable({
     <section>
       <h2 className="mb-3 text-lg font-semibold">Tokens</h2>
       <div className="overflow-hidden rounded-lg border border-border">
-        <div className="grid grid-cols-3 px-4 py-3 text-xs text-text-muted">
+        <div className="grid grid-cols-2 px-4 py-3 text-xs text-text-muted">
           <span>Token</span>
           <span className="text-right">Balance</span>
-          <span className="text-right">Value</span>
         </div>
         {rows.map((row) => (
           <div
             key={row.symbol}
-            className="grid grid-cols-3 items-center px-4 py-4 hover:bg-surface-2"
+            className="grid grid-cols-2 items-center px-4 py-4 hover:bg-surface-2"
           >
             <span className="text-sm font-medium">
-              {row.symbol === "ETH" ? "ETH" : `$${row.symbol}`}
+              {row.symbol === "ETH"
+                ? "ETH"
+                : row.symbol.endsWith("in accounts")
+                  ? `$${project.tokenSymbol} in accounts`
+                  : `$${row.symbol}`}
             </span>
             <span className="tabular text-right text-sm">
               {row.symbol === "ETH"
                 ? formatEth(row.balance, 4)
                 : formatTokenAmount(row.balance)}
-            </span>
-            <span className="tabular text-right text-sm">
-              {row.valueUsd ? formatUsd(row.valueUsd) : "—"}
             </span>
           </div>
         ))}
@@ -364,22 +324,21 @@ function AccountsTable({
       <div className="overflow-hidden rounded-lg border border-border">
         <div className="grid grid-cols-3 px-4 py-3 text-xs text-text-muted">
           <span>NFT</span>
-          <span>Assets</span>
-          <span className="text-right">Estimated value</span>
+          <span>Account</span>
+          <span className="text-right">{tokenLabel()}</span>
         </div>
         {accounts.map((nft) => (
           <Link
             key={nft.tokenId}
-            href={
-              hrefs?.[`${nft.contract}-${nft.tokenId}`] ??
-              `/nft/${nft.chainId}/${nft.contract}/${nft.tokenId}/`
-            }
+            href={hrefs?.[`${nft.contract}-${nft.tokenId}`] ?? accountPath(nft.tokenId)}
             className="grid cursor-pointer grid-cols-3 items-center px-4 py-4 hover:bg-surface-2"
           >
             <span className="text-sm font-medium">{nft.name}</span>
-            <span className="tabular text-sm">{nft.nftAccount?.assets.length}</span>
+            <span className="font-mono text-xs text-text-muted">
+              {nft.nftAccount?.address.slice(0, 8)}…
+            </span>
             <span className="tabular text-right text-sm">
-              {formatUsd(nft.nftAccount?.estimatedTotalValue ?? 0)}
+              {formatTokenAmount(containedAccc(nft))}
             </span>
           </Link>
         ))}
@@ -397,7 +356,7 @@ function ActivityList({
     return (
       <EmptyState
         title="No activity"
-        body="Mints, sales, and NFT Account deposits will appear here."
+        body="Mints and NFT Account deposits for this wallet will appear here."
       />
     );
   }

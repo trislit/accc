@@ -8,7 +8,8 @@ import {
   acccPublicClient,
 } from "../chain";
 import { acccNftAbi, acccTokenAbi } from "../contracts";
-import { LIVE_NFT, LIVE_TOKEN, liveContracts, project } from "../project";
+import { LIVE_NFT, LIVE_TOKEN, liveContracts } from "../project";
+import { fetchAcccNft } from "./scanCollection";
 import type { Address, CollectionNFT } from "../types";
 
 export function useConnectedWallet() {
@@ -146,35 +147,7 @@ export function useOwnedAcccNfts(owner?: Address) {
           functionName: "tokenOfOwnerByIndex",
           args: [owner, BigInt(index)],
         });
-        const account = await acccPublicClient.readContract({
-          address: LIVE_NFT,
-          abi: acccNftAbi,
-          functionName: "accountOf",
-          args: [tokenId],
-        });
-        const id = String(tokenId);
-        nfts.push({
-          chainId: ROBINHOOD_TESTNET_ID,
-          contract: LIVE_NFT,
-          tokenId: id,
-          collectionId: project.collectionId,
-          collectionName: project.collectionName,
-          verified: true,
-          owner,
-          name: `${project.nftPrefix} #${id}`,
-          artId: "wanderer-775",
-          listed: false,
-          traits: [],
-          nftAccount: {
-            address: account,
-            nft: { contract: LIVE_NFT, tokenId: id },
-            controller: owner,
-            assets: [],
-            estimatedTokenValue: 0,
-            estimatedNftValue: 0,
-            estimatedTotalValue: 0,
-          },
-        });
+        nfts.push(await fetchAcccNft(tokenId));
       }
       return nfts;
     },

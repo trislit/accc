@@ -1,12 +1,14 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { encodeFunctionData } from "viem";
 import { useAccount } from "wagmi";
 import { getWalletClient } from "wagmi/actions";
 import { Atmosphere } from "@/components/art/Atmosphere";
 import { NftAccountPanel } from "@/components/account/NftAccountPanel";
+import { TransferModal } from "@/components/account/TransferModal";
 import {
   TransactionModal,
   useOnchainTransaction,
@@ -16,7 +18,7 @@ import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Tabs";
 import { robinhoodTestnet } from "@/lib/chain";
-import { acccTokenAbi } from "@/lib/contracts";
+import { acccTokenAbi, erc6551AccountAbi } from "@/lib/contracts";
 import {
   useAcccBalance,
   useNativeEthBalance,
@@ -32,12 +34,13 @@ import type { NftAccount, TokenAsset } from "@/lib/types";
 function AccountInner() {
   const params = useSearchParams();
   const tokenId = params.get("tokenId") ?? "";
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const ownerQuery = useNftOwner(tokenId || undefined);
   const tbaQuery = useTbaAddress(tokenId || undefined);
   const tbaEth = useNativeEthBalance(tbaQuery.address);
   const tbaToken = useAcccBalance(tbaQuery.address);
   const faucetTx = useOnchainTransaction();
+  const [depositOpen, setDepositOpen] = useState(false);
 
   const isOwner =
     Boolean(address) &&
@@ -57,16 +60,15 @@ function AccountInner() {
         estimatedValueUsd: ethToUsd(tbaEth.formatted),
       });
     }
-    if (tbaToken.formatted) {
-      assets.push({
-        kind: "token",
-        symbol: project.tokenSymbol,
-        name: project.tokenName,
-        contract: LIVE_TOKEN,
-        balance: tbaToken.formatted,
-        estimatedValueUsd: tbaToken.formatted * project.tokenPriceUsd,
-      });
-    }
+    const acccBalance = tbaToken.formatted ?? 0;
+    assets.push({
+      kind: "token",
+      symbol: project.tokenSymbol,
+      name: project.tokenName,
+      contract: LIVE_TOKEN,
+      balance: acccBalance,
+      estimatedValueUsd: acccBalance * project.tokenPriceUsd,
+    });
     const estimatedTokenValue = assets.reduce(
       (sum, asset) => sum + asset.estimatedValueUsd,
       0,
@@ -89,19 +91,38 @@ function AccountInner() {
   ]);
 
   function onFaucet() {
-    faucetTx.start(`Get test ${tokenLabel()}`, 0, async () => {
-      const walletClient = await getWalletClient(wagmiConfig, {
-        chainId: robinhoodTestnet.id,
-      });
-      if (!walletClient) throw new Error("Wallet is not ready.");
-      return walletClient.writeContract({
-        address: LIVE_TOKEN,
-        abi: acccTokenAbi,
-        functionName: "faucet",
-        chain: robinhoodTestnet,
-        account: walletClient.account,
-      });
-    });
+    const tba = tbaQuery.address;
+    if (!tba) return;
+    faucetTx.start(
+      `Mint test ${tokenLabel()} to NFT Account`,
+      0,
+      async () => {
+        const walletClient = await getWalletClient(wagmiConfig, {
+          chainId: robinhoodTestnet.id,
+        });
+        if (!walletClient) throw new Error("Wallet is not ready.");
+        return walletClient.writeContract({
+          address: tba,
+          abi: erc6551AccountAbi,
+          functionName: "execute",
+          args: [
+            LIVE_TOKEN,
+            BigInt(0),
+            encodeFunctionData({
+              abi: acccTokenAbi,
+              functionName: "faucet",
+            }),
+            0,
+          ],
+          chain: robinhoodTestnet,
+          account: walletClient.account,
+        });
+      },
+      () => {
+        void tbaToken.refetch();
+        void tbaEth.refetch();
+      },
+    );
   }
 
   if (!liveContracts) {
@@ -178,13 +199,30 @@ function AccountInner() {
             ) : null}
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
-            {isConnected ? (
-              <Button onClick={onFaucet}>Get test {tokenLabel()}</Button>
+            {isOwner ? (
+              <>
+                <Button onClick={onFaucet} disabled={!tbaQuery.address}>
+                  Get test {tokenLabel()}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setDepositOpen(true)}
+                  disabled={!tbaQuery.address}
+                >
+                  Transfer to NFT
+                </Button>
+              </>
             ) : null}
             <Link href="/mint/">
               <Button variant="secondary">Mint another</Button>
             </Link>
           </div>
+          {isOwner ? (
+            <p className="mt-3 text-sm text-text-secondary">
+              Test {tokenLabel()} is minted into this NFT Account. Transfer more
+              in from your wallet, or withdraw if you want it there.
+            </p>
+          ) : null}
           {account ? (
             <p className="mt-4 text-sm text-text-secondary">
               Contained value {formatUsd(account.estimatedTotalValue)}
@@ -199,10 +237,23 @@ function AccountInner() {
         <p className="text-sm text-text-muted">Loading NFT Account…</p>
       )}
 
+      {account && isOwner ? (
+        <TransferModal
+          open={depositOpen}
+          mode="deposit"
+          tba={account.address}
+          onClose={() => setDepositOpen(false)}
+          onSuccess={() => {
+            void tbaToken.refetch();
+            void tbaEth.refetch();
+          }}
+        />
+      ) : null}
+
       <TransactionModal
         tx={faucetTx}
         completeTitle="Faucet complete"
-        completeBody={`${tokenLabel()} was minted to your wallet. Deposit it into this NFT Account next.`}
+        completeBody={`${tokenLabel()} was minted into this NFT Account. Withdraw if you want it in your wallet.`}
         completeLabel="Done"
         onComplete={() => undefined}
       />

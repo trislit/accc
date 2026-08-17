@@ -14,9 +14,8 @@ import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Tabs } from "@/components/ui/Tabs";
-import { activity } from "@/lib/data/catalog";
 import { ethToUsd, formatEth, formatUsd } from "@/lib/format";
-import type { CollectionNFT } from "@/lib/types";
+import type { ActivityItem, CollectionNFT } from "@/lib/types";
 
 export function NftView({ nft }: { nft: CollectionNFT }) {
   const { address } = useAccount();
@@ -29,6 +28,7 @@ export function NftView({ nft }: { nft: CollectionNFT }) {
   );
   const tx = useMockTransaction();
   const account = nft.nftAccount;
+  const activity: ActivityItem[] = [];
   const marketUsd = nft.market?.listing
     ? ethToUsd(nft.market.listing.priceEth)
     : 0;

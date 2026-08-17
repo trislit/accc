@@ -1,17 +1,6 @@
 import type { Address } from "./types";
 import { ACTIVE_CHAIN_ID, CANONICAL_TBA_REGISTRY } from "./chain";
 
-export const DEMO_OWNER: Address =
-  "0x8421f4ca1fb44b1dd8516cf4c6f2e2e7c91af91a";
-export const DEMO_CREATOR: Address =
-  "0x8a21f4ca1fb44b1dd8516cf4c6f2e2e7c91af91a";
-
-/** Mock catalog listings only. Live mint/account use LIVE_* below. */
-export const SHOWCASE_NFT =
-  "0x71f3a91b4c2d8e9a7b6c5d4e3f2a1b0c9d8e7f6a" as Address;
-export const SHOWCASE_TOKEN =
-  "0xa5e1c0de1234567890abcdef1234567890abcdef" as Address;
-
 /** Robinhood testnet (46630). Public addresses, safe to bake into the static export. */
 export const LIVE_NFT =
   "0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5" as Address;
@@ -41,8 +30,8 @@ export const project = {
   tokenName: "ACCC",
   tokenSymbol: "ACCC",
   chainId: ACTIVE_CHAIN_ID,
-  nftContract: envAddress(process.env.NEXT_PUBLIC_NFT, LIVE_NFT),
-  tokenContract: envAddress(process.env.NEXT_PUBLIC_TOKEN, LIVE_TOKEN),
+  nftContract: LIVE_NFT,
+  tokenContract: LIVE_TOKEN,
   tbaImplementation: envAddress(
     process.env.NEXT_PUBLIC_TBA_IMPLEMENTATION,
     LIVE_TBA_IMPL,
@@ -51,8 +40,8 @@ export const project = {
     process.env.NEXT_PUBLIC_TBA_REGISTRY,
     CANONICAL_TBA_REGISTRY,
   ),
-  treasury: "0x7ea5a1a0de7ea5a1a0de7ea5a1a0de7ea5a1a0de" as Address,
-  creator: DEMO_CREATOR,
+  treasury: LIVE_NFT as Address,
+  creator: LIVE_NFT,
   supply: 10000,
   holders: 1842,
   mintPriceEth: liveContracts ? 0 : 0.08,

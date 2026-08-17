@@ -26,4 +26,4 @@ Addresses are in `.env.local`. Restart `npm run dev` if it was already running.
 2. Deploy and paste addresses into `.env.local`
 3. `npm run dev` — wallet on Robinhood testnet (46630), ETH from https://faucet.testnet.chain.robinhood.com/
 4. Mint genesis → `/account/?tokenId=`
-5. Get test $ACCC → Deposit → Withdraw; balances update
+5. Owner: Get test $ACCC mints into the NFT Account (not the wallet). Transfer to NFT / Withdraw from the NFT page.

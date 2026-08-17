@@ -138,7 +138,11 @@ export function TransferModal({
       <Modal
         open={open && tx.phase === "idle"}
         onClose={onClose}
-        title={mode === "deposit" ? "Deposit to NFT Account" : "Withdraw from NFT Account"}
+        title={
+          mode === "deposit"
+            ? "Transfer to NFT Account"
+            : "Withdraw from NFT Account"
+        }
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
@@ -187,17 +191,19 @@ export function TransferModal({
             disabled={!numeric || numeric <= 0 || numeric > max + 1e-12}
             onClick={submit}
           >
-            {mode === "deposit" ? "Deposit" : "Withdraw"}
+            {mode === "deposit" ? "Transfer to NFT" : "Withdraw"}
           </Button>
         </div>
       </Modal>
       <TransactionModal
         tx={tx}
-        completeTitle={mode === "deposit" ? "Deposit complete" : "Withdraw complete"}
+        completeTitle={
+          mode === "deposit" ? "Transfer complete" : "Withdraw complete"
+        }
         completeBody={
           mode === "deposit"
             ? "Tokens are now held by this NFT Account."
-            : "Tokens were sent to the NFT owner wallet."
+            : "Tokens were sent to your wallet."
         }
         completeLabel="Done"
         onComplete={() => {

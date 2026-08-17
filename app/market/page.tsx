@@ -1,56 +1,43 @@
 "use client";
 
-import { useState } from "react";
 import { NFTCard } from "@/components/cards/NFTCard";
-import { listedNfts } from "@/lib/data/catalog";
+import { EmptyState } from "@/components/ui/Tabs";
+import { useLiveCollection } from "@/lib/data/liveCollection";
 import { project } from "@/lib/project";
-import { cx } from "@/lib/cx";
-
-const sorts = ["Trending", "Price", "New"] as const;
+import { accountPath } from "@/lib/tba";
 
 export default function MarketPage() {
-  const [sort, setSort] = useState<(typeof sorts)[number]>("Trending");
-  const items = [...listedNfts()];
-  if (sort === "Price") {
-    items.sort(
-      (a, b) =>
-        (a.market?.listing?.priceEth ?? 0) - (b.market?.listing?.priceEth ?? 0),
-    );
-  }
-  if (sort === "New") items.reverse();
+  const collection = useLiveCollection();
+  const items = collection.data?.nfts ?? [];
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-[32px] font-semibold leading-10">Market</h1>
         <p className="mt-2 max-w-xl text-sm text-text-secondary">
-          Secondary listings for {project.collectionName} only. Buying an NFT
-          with an NFT Account also transfers whatever that account holds.
+          Live {project.collectionName} on Robinhood testnet. Secondary listings
+          are not enabled yet — minted NFTs and the {project.tokenSymbol} in
+          their NFT Accounts are shown here.
         </p>
-        <div className="mt-4 flex gap-5 border-b border-border-subtle">
-          {sorts.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setSort(item)}
-              className={cx(
-                "relative pb-3 text-sm font-medium",
-                sort === item ? "text-text-primary" : "text-text-muted",
-              )}
-            >
-              {item}
-              {sort === item ? (
-                <span className="absolute inset-x-0 -bottom-px h-0.5 bg-forge-green" />
-              ) : null}
-            </button>
+      </div>
+      {collection.isLoading ? (
+        <p className="text-sm text-text-muted">Reading minted NFTs…</p>
+      ) : items.length === 0 ? (
+        <EmptyState
+          title="No minted NFTs"
+          body="Mint from the live drop. This page lists every token from onchain mint events."
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((nft) => (
+            <NFTCard
+              key={`${nft.contract}-${nft.tokenId}`}
+              nft={nft}
+              href={accountPath(nft.tokenId)}
+            />
           ))}
         </div>
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {items.map((nft) => (
-          <NFTCard key={`${nft.contract}-${nft.tokenId}`} nft={nft} />
-        ))}
-      </div>
+      )}
     </div>
   );
 }

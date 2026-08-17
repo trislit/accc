@@ -8,31 +8,26 @@ import { NFTCard } from "@/components/cards/NFTCard";
 import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { Badge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Tabs } from "@/components/ui/Tabs";
-import { activity, nfts } from "@/lib/data/catalog";
-import { holdingPath } from "@/lib/holdings";
-import { formatEth, formatUsd, formatUsdPrice } from "@/lib/format";
-import { project, tokenLabel } from "@/lib/project";
-import { useHoldings } from "@/lib/useHoldings";
-import type { CollectionNFT } from "@/lib/types";
+import { EmptyState, Tabs } from "@/components/ui/Tabs";
+import { useLiveCollection } from "@/lib/data/liveCollection";
+import { formatTokenAmount } from "@/lib/format";
+import { LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "@/lib/project";
+import { accountPath } from "@/lib/tba";
 
 export function CollectionView() {
   const [tab, setTab] = useState("overview");
-  const holdings = useHoldings();
-  const minted = holdings.map((holding) => holding.nft);
-  const items = [
-    ...minted,
-    ...nfts.filter((nft) => !alreadyShown(minted, nft)),
-  ];
-
-  function hrefFor(nft: CollectionNFT) {
-    const holding = holdings.find(
-      (item) =>
-        item.nft.contract.toLowerCase() === nft.contract.toLowerCase() &&
-        item.nft.tokenId === nft.tokenId,
+  const collection = useLiveCollection();
+  const nfts = collection.data?.nfts ?? [];
+  const minted = collection.data?.minted ?? 0;
+  const holders = collection.data?.holders ?? 0;
+  const tokenSupply = collection.data?.tokenSupply ?? 0;
+  const activity = collection.data?.activity ?? [];
+  const containedAccc = nfts.reduce((sum, nft) => {
+    const asset = nft.nftAccount?.assets.find(
+      (item) => item.kind === "token" && item.symbol === project.tokenSymbol,
     );
-    return holding ? holdingPath(holding.id) : undefined;
-  }
+    return sum + (asset && asset.kind === "token" ? asset.balance : 0);
+  }, 0);
 
   return (
     <div>
@@ -57,11 +52,10 @@ export function CollectionView() {
           </div>
           <p className="mt-2 text-text-secondary">{project.description}</p>
           <p className="mt-2 text-sm text-text-muted">
-            Created by <AddressDisplay address={project.creator} />
+            Contract <AddressDisplay address={LIVE_NFT} />
           </p>
           <p className="mt-1 text-sm text-text-secondary">
-            {project.supply.toLocaleString()} NFTs · {project.holders.toLocaleString()}{" "}
-            holders
+            {minted.toLocaleString()} minted · {holders.toLocaleString()} holders
           </p>
         </div>
         <div className="flex gap-2">
@@ -86,13 +80,24 @@ export function CollectionView() {
 
       {tab === "overview" || tab === "nfts" ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <MarketStat label="NFT floor" value={formatEth(project.floorEth)} />
+          <MarketStat label="Minted" value={minted.toLocaleString()} />
           <MarketStat
-            label={tokenLabel()}
-            value={formatUsdPrice(project.tokenPriceUsd)}
+            label={`${tokenLabel()} in NFT Accounts`}
+            value={formatTokenAmount(containedAccc)}
           />
-          <MarketStat label="24h volume" value={formatEth(project.volume24hEth, 1)} />
+          <MarketStat label="Holders" value={holders.toLocaleString()} />
         </div>
+      ) : null}
+
+      {collection.isLoading ? (
+        <p className="mt-8 text-sm text-text-muted">Reading live collection…</p>
+      ) : null}
+      {collection.error ? (
+        <p className="mt-8 text-sm text-error">
+          {collection.error instanceof Error
+            ? collection.error.message
+            : "Could not load collection."}
+        </p>
       ) : null}
 
       {tab === "overview" ? (
@@ -105,42 +110,62 @@ export function CollectionView() {
               <Row label="NFT Accounts" value="Enabled" />
             </dl>
             <p className="mt-4 max-w-xl text-sm text-text-secondary">
-              Every mint includes an NFT Account. Claim {tokenLabel()} into that
-              account — not the owner wallet.
+              Every mint includes an NFT Account that can hold {tokenLabel()} on
+              Robinhood testnet.
             </p>
             <h3 className="mt-10 text-lg font-semibold">NFTs</h3>
-            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {items.slice(0, 4).map((nft) => (
-                <NFTCard
-                  key={`${nft.contract}-${nft.tokenId}`}
-                  nft={nft}
-                  href={hrefFor(nft)}
-                />
-              ))}
-            </div>
+            {nfts.length === 0 && !collection.isLoading ? (
+              <EmptyState
+                title="No NFTs minted yet"
+                body="Mint from the live drop. New tokens show up here from onchain mint events."
+              />
+            ) : (
+              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+                {nfts.map((nft) => (
+                  <NFTCard
+                    key={`${nft.contract}-${nft.tokenId}`}
+                    nft={nft}
+                    href={accountPath(nft.tokenId)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           <aside className="h-fit rounded-lg border border-border bg-surface-1 p-5">
             <p className="text-sm text-text-muted">{tokenLabel()}</p>
             <p className="mt-1 tabular text-2xl font-semibold">
-              {formatUsdPrice(project.tokenPriceUsd)}
+              {formatTokenAmount(tokenSupply)}
             </p>
-            <p className="text-sm text-forge-green">+{project.tokenChange24h}%</p>
+            <p className="text-sm text-text-secondary">Testnet supply</p>
             <dl className="mt-5 space-y-3 text-sm">
-              <Row label="Market cap" value={formatUsd(project.tokenMarketCapUsd)} />
-              <Row label="Liquidity" value={formatUsd(project.tokenLiquidityUsd)} />
+              <Row label="In NFT Accounts" value={formatTokenAmount(containedAccc)} />
+              <div>
+                <p className="text-text-muted">Contract</p>
+                <AddressDisplay address={LIVE_TOKEN} />
+              </div>
             </dl>
-            <Button className="mt-5 w-full">Trade {tokenLabel()}</Button>
+            {nfts[0] ? (
+              <Link href={accountPath(nfts[0].tokenId)}>
+                <Button className="mt-5 w-full">
+                  Open {nfts[0].name} account
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/mint/">
+                <Button className="mt-5 w-full">Mint</Button>
+              </Link>
+            )}
           </aside>
         </div>
       ) : null}
 
       {tab === "nfts" ? (
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((nft) => (
+          {nfts.map((nft) => (
             <NFTCard
               key={`${nft.contract}-${nft.tokenId}`}
               nft={nft}
-              href={hrefFor(nft)}
+              href={accountPath(nft.tokenId)}
             />
           ))}
         </div>
@@ -151,28 +176,24 @@ export function CollectionView() {
           <div>
             <h2 className="text-2xl font-semibold">{tokenLabel()}</h2>
             <p className="text-sm text-text-secondary">
-              {project.name} ecosystem token
+              Testnet faucet token. NFT Accounts can hold it.
             </p>
             <p className="mt-3 tabular text-3xl font-semibold">
-              {formatUsdPrice(project.tokenPriceUsd)}
+              {formatTokenAmount(tokenSupply)}
             </p>
-            <p className="text-sm text-forge-green">+{project.tokenChange24h}%</p>
+            <p className="text-sm text-text-muted">Total minted via faucet</p>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <MarketStat label="Market cap" value={formatUsd(project.tokenMarketCapUsd)} />
-            <MarketStat label="24h volume" value={formatUsd(project.tokenVolume24hUsd)} />
-            <MarketStat label="Liquidity" value={formatUsd(project.tokenLiquidityUsd)} />
-          </div>
-          <div className="flex gap-2">
-            <Button>Buy</Button>
-            <Button variant="secondary">Sell</Button>
+          <div className="grid grid-cols-2 gap-4">
+            <MarketStat
+              label="In NFT Accounts"
+              value={formatTokenAmount(containedAccc)}
+            />
+            <MarketStat label="NFT Accounts" value={String(minted)} />
           </div>
           <dl className="space-y-3 text-sm">
-            <Row label="Total supply" value={project.tokenSupply.toLocaleString()} />
-            <Row label="Holders" value={project.tokenHolders.toLocaleString()} />
             <div>
               <p className="text-text-muted">Contract</p>
-              <AddressDisplay address={project.tokenContract} />
+              <AddressDisplay address={LIVE_TOKEN} />
             </div>
           </dl>
         </div>
@@ -180,22 +201,35 @@ export function CollectionView() {
 
       {tab === "activity" ? (
         <div className="mt-8 divide-y divide-border-subtle rounded-lg border border-border">
-          {activity.map((item) => (
-            <div key={item.id} className="flex items-center justify-between px-4 py-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                  {item.type}
-                </p>
-                <p className="text-sm font-medium">{item.title}</p>
-              </div>
-              <div className="text-right">
-                {item.amount ? (
-                  <p className="tabular text-sm">{item.amount}</p>
-                ) : null}
-                <p className="text-xs text-text-muted">{item.at}</p>
-              </div>
+          {activity.length === 0 ? (
+            <div className="p-4">
+              <EmptyState
+                title="No activity yet"
+                body="Mints and NFT Account token deposits will show here."
+              />
             </div>
-          ))}
+          ) : (
+            activity.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href ?? "/collection/"}
+                className="flex items-center justify-between px-4 py-4 hover:bg-surface-2"
+              >
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    {item.type}
+                  </p>
+                  <p className="text-sm font-medium">{item.title}</p>
+                </div>
+                <div className="text-right">
+                  {item.amount ? (
+                    <p className="tabular text-sm">{item.amount}</p>
+                  ) : null}
+                  <p className="text-xs text-text-muted">{item.at}</p>
+                </div>
+              </Link>
+            ))
+          )}
         </div>
       ) : null}
     </div>
@@ -217,13 +251,5 @@ function Row({ label, value }: { label: string; value: string }) {
       <dt className="text-text-muted">{label}</dt>
       <dd>{value}</dd>
     </div>
-  );
-}
-
-function alreadyShown(minted: CollectionNFT[], nft: CollectionNFT) {
-  return minted.some(
-    (item) =>
-      item.contract.toLowerCase() === nft.contract.toLowerCase() &&
-      item.tokenId === nft.tokenId,
   );
 }

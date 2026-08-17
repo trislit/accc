@@ -6,7 +6,7 @@ import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { Button } from "@/components/ui/Button";
 import { TransferModal } from "@/components/account/TransferModal";
 import { explorerAddressUrl } from "@/lib/chain";
-import { nftPath } from "@/lib/data/catalog";
+import { nftPath } from "@/lib/paths";
 import { formatTokenAmount, formatUsd } from "@/lib/format";
 import { project } from "@/lib/project";
 import type { NftAccount } from "@/lib/types";
@@ -88,32 +88,33 @@ export function NftAccountPanel({
               View Account
             </Button>
           </a>
-          {live ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setDepositOpen(true)}
-            >
-              Deposit
-            </Button>
-          ) : (
-            <Button variant="secondary" size="sm">
-              Deposit
-            </Button>
-          )}
           {isOwner ? (
             live ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setWithdrawOpen(true)}
-              >
-                Withdraw / Manage
-              </Button>
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setDepositOpen(true)}
+                >
+                  Transfer to NFT
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setWithdrawOpen(true)}
+                >
+                  Withdraw
+                </Button>
+              </>
             ) : (
-              <Button variant="secondary" size="sm">
-                Withdraw / Manage
-              </Button>
+              <>
+                <Button variant="secondary" size="sm">
+                  Transfer to NFT
+                </Button>
+                <Button variant="secondary" size="sm">
+                  Withdraw
+                </Button>
+              </>
             )
           ) : null}
         </div>
@@ -123,7 +124,7 @@ export function NftAccountPanel({
           Contained NFTs remain assets of this NFT Account, not of the owner wallet.
         </p>
       ) : null}
-      {live ? (
+      {live && isOwner ? (
         <>
           <TransferModal
             open={depositOpen}
@@ -131,14 +132,12 @@ export function NftAccountPanel({
             tba={account.address}
             onClose={() => setDepositOpen(false)}
           />
-          {isOwner ? (
-            <TransferModal
-              open={withdrawOpen}
-              mode="withdraw"
-              tba={account.address}
-              onClose={() => setWithdrawOpen(false)}
-            />
-          ) : null}
+          <TransferModal
+            open={withdrawOpen}
+            mode="withdraw"
+            tba={account.address}
+            onClose={() => setWithdrawOpen(false)}
+          />
         </>
       ) : null}
     </section>
