@@ -2,3 +2,7 @@ cache/
 out/
 broadcast/
 lib/
+.env
+.env.*
+!.env.example
+

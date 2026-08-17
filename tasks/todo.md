@@ -11,14 +11,14 @@
 
 Contracts compile and `forge test` passes (5 tests). App typecheck and lint pass.
 
-Deploy still needs a funded testnet key:
+Live on Robinhood testnet (`46630`) from `0x3872ff66dF4b9570F4e58FB1234a717dFe1334a9`:
 
-```bash
-cd contracts
-forge script script/Deploy.s.sol:Deploy --rpc-url https://rpc.testnet.chain.robinhood.com --broadcast --private-key $PRIVATE_KEY
-```
+- TBA implementation: `0x8A0455E86536F57323866ed13c26febAb8ae3049`
+- AcccNft: `0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5`
+- AcccToken: `0x3EE8c0c19f6622e6a62f9F04a79cB92444719f71`
+- Registry (canonical): `0x000000006551c19487814612e58FE06813775758`
 
-Paste printed addresses into `.env.local`, then mint / deposit / withdraw on http://localhost:3000.
+Addresses are in `.env.local`. Restart `npm run dev` if it was already running.
 
 ## How to verify
 
