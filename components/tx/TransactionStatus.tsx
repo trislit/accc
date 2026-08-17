@@ -2,8 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { TransactionReceipt } from "viem";
-import { usePublicClient } from "wagmi";
-import { explorerTxUrl } from "@/lib/chain";
+import { acccPublicClient, explorerTxUrl } from "@/lib/chain";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { formatEth } from "@/lib/format";
@@ -87,7 +86,6 @@ export function useOnchainTransaction(): TxController & {
     onReceipt?: (receipt: TransactionReceipt) => void,
   ) => void;
 } {
-  const publicClient = usePublicClient();
   const sendRef = useRef<(() => Promise<`0x${string}`>) | null>(null);
   const onReceiptRef = useRef<
     ((receipt: TransactionReceipt) => void) | undefined
@@ -114,7 +112,7 @@ export function useOnchainTransaction(): TxController & {
   }
 
   async function confirm() {
-    if (!sendRef.current || !publicClient) {
+    if (!sendRef.current) {
       setError("Wallet is not ready.");
       return;
     }
@@ -124,7 +122,7 @@ export function useOnchainTransaction(): TxController & {
       const nextHash = await sendRef.current();
       setHash(nextHash);
       setPhase("submitted");
-      const receipt = await publicClient.waitForTransactionReceipt({
+      const receipt = await acccPublicClient.waitForTransactionReceipt({
         hash: nextHash,
       });
       if (receipt.status !== "success") {

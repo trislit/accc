@@ -51,8 +51,8 @@ export function AppHeader() {
             className="hidden h-10 items-center gap-2 rounded-full border border-border bg-surface-1 px-3 text-sm text-text-secondary sm:inline-flex"
           >
             <span className="h-4 w-4 rounded-full bg-forge-green/90" />
-            <span className="hidden xl:inline">Robinhood Chain</span>
-            <span className="xl:hidden">RH</span>
+            <span className="hidden xl:inline">Robinhood Testnet</span>
+            <span className="xl:hidden">RH test</span>
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
           <WalletControls />

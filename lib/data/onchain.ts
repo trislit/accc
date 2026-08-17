@@ -2,14 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { erc20Abi, formatEther, formatUnits } from "viem";
+import { useAccount, useBalance, useReadContract, useReadContracts } from "wagmi";
 import {
-  useAccount,
-  useBalance,
-  usePublicClient,
-  useReadContract,
-  useReadContracts,
-} from "wagmi";
-import { activeChain } from "../chain";
+  ROBINHOOD_TESTNET_ID,
+  acccPublicClient,
+} from "../chain";
 import { acccNftAbi, acccTokenAbi } from "../contracts";
 import { LIVE_NFT, LIVE_TOKEN, liveContracts, project } from "../project";
 import type { Address, CollectionNFT } from "../types";
@@ -20,7 +17,7 @@ export function useConnectedWallet() {
     address: account.address,
     isConnected: account.isConnected,
     chainId: account.chainId,
-    isRobinhood: account.chainId === activeChain.id,
+    isRobinhood: account.chainId === ROBINHOOD_TESTNET_ID,
     status: account.status,
   };
 }
@@ -28,7 +25,7 @@ export function useConnectedWallet() {
 export function useNativeEthBalance(address?: Address) {
   const { data, error, isLoading, refetch } = useBalance({
     address,
-    chainId: activeChain.id,
+    chainId: ROBINHOOD_TESTNET_ID,
     query: { enabled: Boolean(address) },
   });
 
@@ -48,7 +45,7 @@ export function useAcccBalance(holder?: Address) {
     abi: acccTokenAbi,
     functionName: "balanceOf",
     args: holder ? [holder] : undefined,
-    chainId: activeChain.id,
+    chainId: ROBINHOOD_TESTNET_ID,
     query: { enabled },
   });
 
@@ -69,7 +66,7 @@ export function useNftOwner(tokenId?: string) {
     abi: acccNftAbi,
     functionName: "ownerOf",
     args: tokenId ? [BigInt(tokenId)] : undefined,
-    chainId: activeChain.id,
+    chainId: ROBINHOOD_TESTNET_ID,
     query: { enabled },
   });
 
@@ -88,7 +85,7 @@ export function useTbaAddress(tokenId?: string) {
     abi: acccNftAbi,
     functionName: "accountOf",
     args: tokenId ? [BigInt(tokenId)] : undefined,
-    chainId: activeChain.id,
+    chainId: ROBINHOOD_TESTNET_ID,
     query: { enabled },
   });
 
@@ -101,16 +98,21 @@ export function useTbaAddress(tokenId?: string) {
 }
 
 export function useOwnedAcccNfts(owner?: Address) {
-  const publicClient = usePublicClient({ chainId: activeChain.id });
-  const enabled = Boolean(liveContracts && publicClient && owner);
+  const enabled = Boolean(liveContracts && owner);
 
   const query = useQuery({
-    queryKey: ["accc-owned", activeChain.id, LIVE_NFT, owner],
+    queryKey: ["accc-owned", ROBINHOOD_TESTNET_ID, LIVE_NFT, owner],
     enabled,
     refetchOnMount: "always",
     queryFn: async () => {
-      if (!publicClient || !owner) return [];
-      const balance = await publicClient.readContract({
+      if (!owner) return [];
+      const chainId = await acccPublicClient.getChainId();
+      if (chainId !== ROBINHOOD_TESTNET_ID) {
+        throw new Error(
+          `Portfolio reads must use Robinhood testnet (${ROBINHOOD_TESTNET_ID}), got ${chainId}.`,
+        );
+      }
+      const balance = await acccPublicClient.readContract({
         address: LIVE_NFT,
         abi: acccNftAbi,
         functionName: "balanceOf",
@@ -118,13 +120,13 @@ export function useOwnedAcccNfts(owner?: Address) {
       });
       const nfts: CollectionNFT[] = [];
       for (let index = 0; index < Number(balance); index += 1) {
-        const tokenId = await publicClient.readContract({
+        const tokenId = await acccPublicClient.readContract({
           address: LIVE_NFT,
           abi: acccNftAbi,
           functionName: "tokenOfOwnerByIndex",
           args: [owner, BigInt(index)],
         });
-        const account = await publicClient.readContract({
+        const account = await acccPublicClient.readContract({
           address: LIVE_NFT,
           abi: acccNftAbi,
           functionName: "accountOf",
@@ -132,7 +134,7 @@ export function useOwnedAcccNfts(owner?: Address) {
         });
         const id = String(tokenId);
         nfts.push({
-          chainId: activeChain.id,
+          chainId: ROBINHOOD_TESTNET_ID,
           contract: LIVE_NFT,
           tokenId: id,
           collectionId: project.collectionId,
@@ -176,26 +178,26 @@ export function useDemoTokenBalance(holder?: Address) {
         address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "name",
-        chainId: activeChain.id,
+        chainId: ROBINHOOD_TESTNET_ID,
       },
       {
         address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "symbol",
-        chainId: activeChain.id,
+        chainId: ROBINHOOD_TESTNET_ID,
       },
       {
         address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "decimals",
-        chainId: activeChain.id,
+        chainId: ROBINHOOD_TESTNET_ID,
       },
       {
         address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "balanceOf",
         args: holder ? [holder] : undefined,
-        chainId: activeChain.id,
+        chainId: ROBINHOOD_TESTNET_ID,
       },
     ],
   });
