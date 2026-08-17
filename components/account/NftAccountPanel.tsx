@@ -1,19 +1,30 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { Button } from "@/components/ui/Button";
+import { TransferModal } from "@/components/account/TransferModal";
+import { explorerAddressUrl } from "@/lib/chain";
 import { nftPath } from "@/lib/data/catalog";
 import { formatTokenAmount, formatUsd } from "@/lib/format";
+import { project } from "@/lib/project";
 import type { NftAccount } from "@/lib/types";
 
 export function NftAccountPanel({
   account,
   isOwner,
   compact = false,
+  live = false,
 }: {
   account: NftAccount;
   isOwner?: boolean;
   compact?: boolean;
+  live?: boolean;
 }) {
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+
   return (
     <section className="rounded-lg border border-border bg-surface-1 p-5">
       <h3 className="text-base font-semibold">NFT Account</h3>
@@ -40,7 +51,11 @@ export function NftAccountPanel({
               >
                 <div>
                   <p className="text-sm font-medium">
-                    {asset.kind === "token" ? `$${asset.symbol}` : asset.name}
+                    {asset.kind === "token"
+                      ? asset.symbol === "ETH"
+                        ? "ETH"
+                        : `$${asset.symbol}`
+                      : asset.name}
                   </p>
                   {asset.kind === "token" ? (
                     <p className="tabular text-xs text-text-muted">
@@ -64,16 +79,42 @@ export function NftAccountPanel({
       </div>
       {!compact ? (
         <div className="mt-5 flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm">
-            View Account
-          </Button>
-          <Button variant="secondary" size="sm">
-            Deposit
-          </Button>
-          {isOwner ? (
+          <a
+            href={explorerAddressUrl(account.address)}
+            target="_blank"
+            rel="noreferrer"
+          >
             <Button variant="secondary" size="sm">
-              Withdraw / Manage
+              View Account
             </Button>
+          </a>
+          {live ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setDepositOpen(true)}
+            >
+              Deposit
+            </Button>
+          ) : (
+            <Button variant="secondary" size="sm">
+              Deposit
+            </Button>
+          )}
+          {isOwner ? (
+            live ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setWithdrawOpen(true)}
+              >
+                Withdraw / Manage
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm">
+                Withdraw / Manage
+              </Button>
+            )
           ) : null}
         </div>
       ) : null}
@@ -81,6 +122,24 @@ export function NftAccountPanel({
         <p className="mt-3 text-xs text-text-muted">
           Contained NFTs remain assets of this NFT Account, not of the owner wallet.
         </p>
+      ) : null}
+      {live ? (
+        <>
+          <TransferModal
+            open={depositOpen}
+            mode="deposit"
+            tba={account.address}
+            onClose={() => setDepositOpen(false)}
+          />
+          {isOwner ? (
+            <TransferModal
+              open={withdrawOpen}
+              mode="withdraw"
+              tba={account.address}
+              onClose={() => setWithdrawOpen(false)}
+            />
+          ) : null}
+        </>
       ) : null}
     </section>
   );
@@ -100,7 +159,7 @@ export function NftAccountRow({
       href={
         href ||
         nftPath({
-          chainId: 4663,
+          chainId: project.chainId,
           contract: account.nft.contract,
           tokenId: account.nft.tokenId,
         })

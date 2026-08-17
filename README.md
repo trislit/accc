@@ -14,7 +14,8 @@ This is **not** TwinForge. TwinForge stays the factory.
 - `/collection` collection + $ACCC + activity
 - `/market` secondary listings
 - `/mint` genesis drop
-- `/nft/...` NFT + NFT Account + buy/list
+- `/nft/...` NFT + NFT Account + buy/list (showcase catalog)
+- `/account?tokenId=` live ERC-6551 account (deposit / withdraw)
 - `/portfolio` ACCC holdings
 - `/held?id=` minted NFTs in this browser
 
@@ -35,16 +36,32 @@ npm run build
 
 `npm run build` writes a static export to `out/` for Cloudflare Pages.
 
+## Contracts (Robinhood testnet)
+
+```bash
+cd contracts
+forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts --no-git
+forge test
+forge script script/Deploy.s.sol:Deploy --rpc-url https://rpc.testnet.chain.robinhood.com --broadcast --private-key $PRIVATE_KEY
+```
+
+Paste the printed addresses into `.env.local`. Get testnet ETH from [the faucet](https://faucet.testnet.chain.robinhood.com/).
+
 ## Environment
 
 Copy `.env.example` to `.env.local`.
 
 | Variable | Purpose |
 | --- | --- |
-| `NEXT_PUBLIC_RPC_URL` | Optional Robinhood Chain RPC (defaults to the public endpoint) |
+| `NEXT_PUBLIC_CHAIN_ID` | `46630` testnet (default) or `4663` mainnet |
+| `NEXT_PUBLIC_RPC_URL` | Optional Robinhood Chain RPC |
 | `NEXT_PUBLIC_WALLETCONNECT_ID` | Enables WalletConnect in the connect modal |
+| `NEXT_PUBLIC_NFT` | Live AcccNft address |
+| `NEXT_PUBLIC_TOKEN` | Live AcccToken address |
+| `NEXT_PUBLIC_TBA_IMPLEMENTATION` | Live ERC6551Account implementation |
+| `NEXT_PUBLIC_TBA_REGISTRY` | Canonical ERC-6551 registry |
 
-Writes (buy, list, mint) are mocked until contracts exist.
+Buy/list stay mocked. Mint, faucet, deposit, and withdraw are live when NFT/token/implementation addresses are set.
 
 ## Cloudflare
 
@@ -52,4 +69,4 @@ Static export (`out/`). Framework preset: **None**. Build: `npm run build`. Depl
 
 ## Stack
 
-Next.js App Router (static export), Tailwind, wagmi, viem, Robinhood Chain (`4663`).
+Next.js App Router (static export), Tailwind, wagmi, viem, Robinhood Chain testnet (`46630`).

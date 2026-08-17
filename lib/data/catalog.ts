@@ -1,4 +1,5 @@
-import { DEMO_CREATOR, DEMO_OWNER, project } from "../project";
+import { ROBINHOOD_CHAIN_ID } from "../chain";
+import { DEMO_CREATOR, DEMO_OWNER, SHOWCASE_NFT, SHOWCASE_TOKEN, project } from "../project";
 import type { ActivityItem, Address, CollectionNFT } from "../types";
 
 export { DEMO_CREATOR, DEMO_OWNER };
@@ -12,8 +13,8 @@ export function nftPath(nft: Pick<CollectionNFT, "chainId" | "contract" | "token
 
 export const nfts: CollectionNFT[] = [
   {
-    chainId: project.chainId,
-    contract: project.nftContract,
+    chainId: ROBINHOOD_CHAIN_ID,
+    contract: SHOWCASE_NFT,
     tokenId: "775",
     collectionId: project.collectionId,
     collectionName: project.collectionName,
@@ -43,14 +44,14 @@ export const nfts: CollectionNFT[] = [
     },
     nftAccount: {
       address: ITEM_775_ACCOUNT,
-      nft: { contract: project.nftContract, tokenId: "775" },
+      nft: { contract: SHOWCASE_NFT, tokenId: "775" },
       controller: DEMO_OWNER,
       assets: [
         {
           kind: "token",
           symbol: project.tokenSymbol,
           name: project.tokenName,
-          contract: project.tokenContract,
+          contract: SHOWCASE_TOKEN,
           balance: 18420,
           estimatedValueUsd: 1547,
         },
@@ -58,7 +59,7 @@ export const nfts: CollectionNFT[] = [
           kind: "nft",
           name: `${project.nftPrefix} #12`,
           collection: project.collectionName,
-          contract: project.nftContract,
+          contract: SHOWCASE_NFT,
           tokenId: "12",
           estimatedValueUsd: 310,
           artId: "gate-12",
@@ -70,8 +71,8 @@ export const nfts: CollectionNFT[] = [
     },
   },
   {
-    chainId: project.chainId,
-    contract: project.nftContract,
+    chainId: ROBINHOOD_CHAIN_ID,
+    contract: SHOWCASE_NFT,
     tokenId: "8812",
     collectionId: project.collectionId,
     collectionName: project.collectionName,
@@ -90,14 +91,14 @@ export const nfts: CollectionNFT[] = [
     },
     nftAccount: {
       address: "0x8812acc08812acc08812acc08812acc08812acc0",
-      nft: { contract: project.nftContract, tokenId: "8812" },
+      nft: { contract: SHOWCASE_NFT, tokenId: "8812" },
       controller: DEMO_CREATOR,
       assets: [
         {
           kind: "token",
           symbol: project.tokenSymbol,
           name: project.tokenName,
-          contract: project.tokenContract,
+          contract: SHOWCASE_TOKEN,
           balance: 2400,
           estimatedValueUsd: 202,
         },
@@ -108,8 +109,8 @@ export const nfts: CollectionNFT[] = [
     },
   },
   {
-    chainId: project.chainId,
-    contract: project.nftContract,
+    chainId: ROBINHOOD_CHAIN_ID,
+    contract: SHOWCASE_NFT,
     tokenId: "12",
     collectionId: project.collectionId,
     collectionName: project.collectionName,
@@ -125,7 +126,7 @@ export const nfts: CollectionNFT[] = [
     },
     nftAccount: {
       address: "0x0012acc00012acc00012acc00012acc00012acc0",
-      nft: { contract: project.nftContract, tokenId: "12" },
+      nft: { contract: SHOWCASE_NFT, tokenId: "12" },
       controller: DEMO_OWNER,
       assets: [],
       estimatedTokenValue: 0,
@@ -134,8 +135,8 @@ export const nfts: CollectionNFT[] = [
     },
   },
   {
-    chainId: project.chainId,
-    contract: project.nftContract,
+    chainId: ROBINHOOD_CHAIN_ID,
+    contract: SHOWCASE_NFT,
     tokenId: "441",
     collectionId: project.collectionId,
     collectionName: project.collectionName,
@@ -220,7 +221,7 @@ export const portfolioDemo = {
       name: project.tokenName,
       balance: 42820,
       valueUsd: 3597,
-      contract: project.tokenContract,
+      contract: SHOWCASE_TOKEN,
     },
   ],
 };

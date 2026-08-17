@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { TransactionReceipt } from "viem";
+import { usePublicClient } from "wagmi";
 import { explorerTxUrl } from "@/lib/chain";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -13,6 +15,18 @@ export type TxPhase =
   | "submitted"
   | "complete";
 
+export type TxController = {
+  phase: TxPhase;
+  hash?: string;
+  action: string;
+  amountEth: number;
+  error?: string;
+  live?: boolean;
+  confirm: () => void;
+  finish: () => void;
+  reset: () => void;
+};
+
 function fakeHash() {
   const bytes = Array.from({ length: 20 }, () =>
     Math.floor(Math.random() * 16).toString(16),
@@ -20,7 +34,9 @@ function fakeHash() {
   return `0x82F${bytes}921`;
 }
 
-export function useMockTransaction() {
+export function useMockTransaction(): TxController & {
+  start: (nextAction: string, nextAmount: number) => void;
+} {
   const [phase, setPhase] = useState<TxPhase>("idle");
   const [hash, setHash] = useState<string>();
   const [action, setAction] = useState("");
@@ -50,7 +66,105 @@ export function useMockTransaction() {
     setHash(undefined);
   }
 
-  return { phase, hash, action, amountEth, start, confirm, finish, reset };
+  return {
+    phase,
+    hash,
+    action,
+    amountEth,
+    live: false,
+    start,
+    confirm,
+    finish,
+    reset,
+  };
+}
+
+export function useOnchainTransaction(): TxController & {
+  start: (
+    nextAction: string,
+    nextAmount: number,
+    send: () => Promise<`0x${string}`>,
+    onReceipt?: (receipt: TransactionReceipt) => void,
+  ) => void;
+} {
+  const publicClient = usePublicClient();
+  const sendRef = useRef<(() => Promise<`0x${string}`>) | null>(null);
+  const onReceiptRef = useRef<
+    ((receipt: TransactionReceipt) => void) | undefined
+  >(undefined);
+  const [phase, setPhase] = useState<TxPhase>("idle");
+  const [hash, setHash] = useState<string>();
+  const [action, setAction] = useState("");
+  const [amountEth, setAmountEth] = useState(0);
+  const [error, setError] = useState<string>();
+
+  function start(
+    nextAction: string,
+    nextAmount: number,
+    send: () => Promise<`0x${string}`>,
+    onReceipt?: (receipt: TransactionReceipt) => void,
+  ) {
+    sendRef.current = send;
+    onReceiptRef.current = onReceipt;
+    setAction(nextAction);
+    setAmountEth(nextAmount);
+    setError(undefined);
+    setHash(undefined);
+    setPhase("confirm");
+  }
+
+  async function confirm() {
+    if (!sendRef.current || !publicClient) {
+      setError("Wallet is not ready.");
+      return;
+    }
+    setError(undefined);
+    setPhase("awaiting");
+    try {
+      const nextHash = await sendRef.current();
+      setHash(nextHash);
+      setPhase("submitted");
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash: nextHash,
+      });
+      if (receipt.status !== "success") {
+        setError("Transaction reverted.");
+        setPhase("confirm");
+        return;
+      }
+      onReceiptRef.current?.(receipt);
+      setPhase("complete");
+    } catch (caught) {
+      const message =
+        caught instanceof Error ? caught.message : "Transaction failed";
+      setError(message.split("Version:")[0].trim());
+      setPhase("confirm");
+    }
+  }
+
+  function finish() {
+    setPhase("complete");
+  }
+
+  function reset() {
+    setPhase("idle");
+    setHash(undefined);
+    setError(undefined);
+    sendRef.current = null;
+  }
+
+  return {
+    phase,
+    hash,
+    action,
+    amountEth,
+    error,
+    live: true,
+    start,
+    confirm,
+    finish,
+    reset,
+  };
 }
 
 export function TransactionModal({
@@ -61,7 +175,7 @@ export function TransactionModal({
   completeLabel,
   onComplete,
 }: {
-  tx: ReturnType<typeof useMockTransaction>;
+  tx: TxController;
   completeTitle: string;
   completeBody: string;
   completeHref?: string;
@@ -88,23 +202,44 @@ export function TransactionModal({
       {tx.phase === "confirm" ? (
         <div className="space-y-3 text-sm">
           <Row label="Action" value={tx.action} />
-          <Row label="Amount" value={formatEth(tx.amountEth)} />
-          <Row label="Estimated gas" value={formatEth(gas, 4)} />
-          <Row label="Total" value={formatEth(tx.amountEth + gas, 4)} />
-          <p className="text-xs text-text-muted">
-            This showcase does not send a real transaction until the collection contracts are live.
-          </p>
+          {tx.amountEth > 0 ? (
+            <>
+              <Row label="Amount" value={formatEth(tx.amountEth)} />
+              <Row label="Estimated gas" value={formatEth(gas, 4)} />
+              <Row label="Total" value={formatEth(tx.amountEth + gas, 4)} />
+            </>
+          ) : (
+            <Row label="Network" value="Robinhood Chain" />
+          )}
+          {tx.live ? (
+            <p className="text-xs text-text-muted">
+              This sends a real transaction from your connected wallet.
+            </p>
+          ) : (
+            <p className="text-xs text-text-muted">
+              This showcase does not send a real transaction until the collection
+              contracts are live.
+            </p>
+          )}
+          {tx.error ? <p className="text-sm text-error">{tx.error}</p> : null}
           <Button className="w-full" onClick={tx.confirm}>
             Confirm
           </Button>
         </div>
       ) : null}
       {tx.phase === "awaiting" ? (
-        <p className="text-sm text-text-secondary">Preparing mock approval…</p>
+        <p className="text-sm text-text-secondary">
+          {tx.live ? "Confirm in your wallet…" : "Preparing mock approval…"}
+        </p>
       ) : null}
       {tx.phase === "submitted" && tx.hash ? (
         <div className="space-y-4">
-          <p className="break-all font-mono text-sm text-text-secondary">{tx.hash}</p>
+          <p className="text-sm text-text-secondary">
+            {tx.live ? "Waiting for confirmation…" : null}
+          </p>
+          <p className="break-all font-mono text-sm text-text-secondary">
+            {tx.hash}
+          </p>
           <a
             href={explorerTxUrl(tx.hash)}
             target="_blank"
@@ -113,9 +248,11 @@ export function TransactionModal({
           >
             View transaction
           </a>
-          <Button className="w-full" onClick={tx.finish}>
-            Continue
-          </Button>
+          {tx.live ? null : (
+            <Button className="w-full" onClick={tx.finish}>
+              Continue
+            </Button>
+          )}
         </div>
       ) : null}
       {tx.phase === "complete" ? (

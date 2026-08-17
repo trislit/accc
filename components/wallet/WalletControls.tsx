@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
-import { ROBINHOOD_CHAIN_ID } from "@/lib/chain";
+import { activeChain, isTestnet } from "@/lib/chain";
 import { abbreviateAddress } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -32,7 +32,7 @@ export function ConnectModal({
   return (
     <Modal open={open} onClose={onClose} title="Connect wallet">
       <p className="mb-4 text-sm text-text-secondary">
-        Connect to this collection on Robinhood Chain.
+        Connect to this collection on {activeChain.name}.
       </p>
       <div className="space-y-2">
         {connectors.map((connector) => (
@@ -40,7 +40,7 @@ export function ConnectModal({
             key={connector.uid}
             type="button"
             disabled={isPending}
-            onClick={() => connect({ connector, chainId: ROBINHOOD_CHAIN_ID })}
+            onClick={() => connect({ connector, chainId: activeChain.id })}
             className="flex h-12 w-full items-center justify-between rounded-md border border-border bg-surface-2 px-4 text-sm font-medium hover:bg-surface-3"
           >
             {connectorLabel(connector.name)}
@@ -63,21 +63,22 @@ export function ConnectModal({
 export function WrongNetworkModal() {
   const { isConnected, chainId } = useAccount();
   const { switchChain, isPending } = useSwitchChain();
-  const wrong = isConnected && chainId !== ROBINHOOD_CHAIN_ID;
+  const wrong = isConnected && chainId !== activeChain.id;
 
   return (
     <Modal
       open={Boolean(wrong)}
       onClose={() => undefined}
-      title="Robinhood Chain required"
+      title={`${activeChain.name} required`}
     >
       <p className="mb-4 text-sm text-text-secondary">
-        This collection runs on Robinhood Chain. Switch networks to continue.
+        This collection runs on {activeChain.name}
+        {isTestnet ? " (chain ID 46630)" : ""}. Switch networks to continue.
       </p>
       <Button
         className="w-full"
         disabled={isPending}
-        onClick={() => switchChain({ chainId: ROBINHOOD_CHAIN_ID })}
+        onClick={() => switchChain({ chainId: activeChain.id })}
       >
         Switch network
       </Button>

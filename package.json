@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "contracts:test": "forge test --root contracts",
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {

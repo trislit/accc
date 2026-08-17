@@ -16,34 +16,49 @@ import {
 } from "@/lib/data/catalog";
 import { holdingPath } from "@/lib/holdings";
 import { useHoldings } from "@/lib/useHoldings";
-import { useNativeEthBalance } from "@/lib/data/onchain";
+import { useAcccBalance, useNativeEthBalance, useOwnedAcccNfts } from "@/lib/data/onchain";
 import { ethToUsd, formatEth, formatTokenAmount, formatUsd } from "@/lib/format";
-import { project, tokenLabel } from "@/lib/project";
+import { liveContracts, project, tokenLabel } from "@/lib/project";
+import { accountPath } from "@/lib/tba";
 import type { Address, CollectionNFT } from "@/lib/types";
 
 export default function PortfolioPage() {
   const { address, isConnected } = useAccount();
   const wallet = (isConnected && address ? address : DEMO_OWNER) as Address;
   const eth = useNativeEthBalance(isConnected ? address : undefined);
+  const walletAccc = useAcccBalance(isConnected && liveContracts ? address : undefined);
   const [tab, setTab] = useState("overview");
-  const example = !isConnected;
   const holdings = useHoldings(address);
+  const onchain = useOwnedAcccNfts(liveContracts && address ? address : undefined);
+  const example = !isConnected;
+  const useLiveHoldings = Boolean(liveContracts && isConnected && address);
   const owned = example
     ? nftsOwnedBy(DEMO_OWNER)
-    : address
-      ? holdings.map((holding) => holding.nft)
-      : [];
+    : useLiveHoldings
+      ? onchain.nfts
+      : address
+        ? holdings.map((holding) => holding.nft)
+        : [];
   const ownedHrefs = example
     ? undefined
-    : Object.fromEntries(
-        holdings.map((holding) => [
-          `${holding.nft.contract}-${holding.nft.tokenId}`,
-          holdingPath(holding.id),
-        ]),
-      );
+    : useLiveHoldings
+      ? Object.fromEntries(
+          onchain.nfts.map((nft) => [
+            `${nft.contract}-${nft.tokenId}`,
+            accountPath(nft.tokenId),
+          ]),
+        )
+      : Object.fromEntries(
+          holdings.map((holding) => [
+            `${holding.nft.contract}-${holding.nft.tokenId}`,
+            holdingPath(holding.id),
+          ]),
+        );
   const accounts = example
     ? accountNfts(DEMO_OWNER)
-    : holdings.map((holding) => holding.nft).filter((nft) => nft.nftAccount);
+    : useLiveHoldings
+      ? onchain.nfts
+      : holdings.map((holding) => holding.nft).filter((nft) => nft.nftAccount);
   const liveEthUsd = eth.formatted ? ethToUsd(eth.formatted) : 0;
   const nftsUsd = example
     ? owned.reduce(
@@ -51,7 +66,7 @@ export default function PortfolioPage() {
         0,
       )
     : holdings.reduce((sum, holding) => sum + ethToUsd(holding.mintPriceEth), 0);
-  const accountsUsd = (example ? accounts : holdings.map((holding) => holding.nft)).reduce(
+  const accountsUsd = accounts.reduce(
     (sum, nft) => sum + (nft.nftAccount?.estimatedTotalValue ?? 0),
     0,
   );
@@ -77,8 +92,17 @@ export default function PortfolioPage() {
         contract: "0x0000000000000000000000000000000000000000" as Address,
       });
     }
+    if (isConnected && walletAccc.formatted) {
+      rows.push({
+        symbol: project.tokenSymbol,
+        name: project.tokenName,
+        balance: walletAccc.formatted,
+        valueUsd: walletAccc.formatted * project.tokenPriceUsd,
+        contract: project.tokenContract,
+      });
+    }
     return rows;
-  }, [eth.formatted, example, isConnected, liveEthUsd]);
+  }, [eth.formatted, example, isConnected, liveEthUsd, walletAccc.formatted]);
 
   return (
     <div className="space-y-8">

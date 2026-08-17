@@ -1,5 +1,8 @@
 import { nftPath } from "./data/catalog";
+import { accountPath } from "./tba";
 import type { CollectionNFT } from "./types";
+
+export { accountPath };
 
 export function collectionPath() {
   return "/collection/";

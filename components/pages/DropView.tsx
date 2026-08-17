@@ -2,19 +2,23 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract, useWalletClient } from "wagmi";
 import { ProjectVideo } from "@/components/art/ProjectVideo";
 import {
   TransactionModal,
   useMockTransaction,
+  useOnchainTransaction,
 } from "@/components/tx/TransactionStatus";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ConnectModal } from "@/components/wallet/WalletControls";
+import { acccNftAbi } from "@/lib/contracts";
+import { activeChain } from "@/lib/chain";
 import { mintHoldings } from "@/lib/holdings";
 import { useHoldings } from "@/lib/useHoldings";
 import { formatEth } from "@/lib/format";
-import { project, tokenLabel } from "@/lib/project";
+import { liveContracts, project, tokenLabel } from "@/lib/project";
+import { accountPath, tokenIdFromMintReceipt } from "@/lib/tba";
 import type { Drop } from "@/lib/types";
 
 const statusTone = {
@@ -31,12 +35,33 @@ const statusLabel = {
 
 export function DropView({ drop }: { drop: Drop }) {
   const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const mine = useHoldings(address);
   const allHoldings = useHoldings();
   const rawTx = useMockTransaction();
+  const liveTx = useOnchainTransaction();
   const [quantity, setQuantity] = useState(1);
   const [connectOpen, setConnectOpen] = useState(false);
   const [mintedIds, setMintedIds] = useState<string[]>([]);
+  const [liveTokenId, setLiveTokenId] = useState<string>();
+  const onchainMint = liveContracts && drop.id === "genesis";
+
+  const nextId = useReadContract({
+    address: project.nftContract,
+    abi: acccNftAbi,
+    functionName: "nextId",
+    chainId: activeChain.id,
+    query: { enabled: onchainMint },
+  });
+  const ownedOnchain = useReadContract({
+    address: project.nftContract,
+    abi: acccNftAbi,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    chainId: activeChain.id,
+    query: { enabled: onchainMint && Boolean(address) },
+  });
+
   const tx = {
     ...rawTx,
     confirm: () => {
@@ -50,30 +75,54 @@ export function DropView({ drop }: { drop: Drop }) {
 
   const localMinted = allHoldings.filter((holding) => holding.dropId === drop.id)
     .length;
-  const minted = drop.minted + localMinted;
+  const minted = onchainMint
+    ? Number(nextId.data ?? 0)
+    : drop.minted + localMinted;
   const remaining = Math.max(0, drop.supply - minted);
-  const already = mine.filter((holding) => holding.dropId === drop.id).length;
+  const already = onchainMint
+    ? Number(ownedOnchain.data ?? 0)
+    : mine.filter((holding) => holding.dropId === drop.id).length;
   const walletLeft = Math.max(0, drop.maxPerWallet - already);
-  const maxQty = Math.min(drop.maxPerWallet, remaining, walletLeft || drop.maxPerWallet);
-  const total = drop.priceEth * quantity;
+  const maxQty = onchainMint
+    ? 1
+    : Math.min(drop.maxPerWallet, remaining, walletLeft || drop.maxPerWallet);
+  const total = onchainMint ? 0 : drop.priceEth * quantity;
   const canMint =
     drop.status === "live" && remaining > 0 && (!isConnected || walletLeft > 0);
 
   const includes = useMemo(
     () =>
       [
-        `${quantity} × ${drop.includes.nftLabel.replace(/^1 /, "")}`,
+        `${onchainMint ? 1 : quantity} × ${drop.includes.nftLabel.replace(/^1 /, "")}`,
         drop.includes.nftAccount
-          ? `${quantity} NFT Account${quantity > 1 ? "s" : ""}`
+          ? `${onchainMint ? 1 : quantity} NFT Account${quantity > 1 && !onchainMint ? "s" : ""}`
           : "",
-        `${(drop.includes.tokenClaim * quantity).toLocaleString()} ${tokenLabel()} claim eligibility`,
+        onchainMint
+          ? "Onchain ERC-6551 account created at mint"
+          : `${(drop.includes.tokenClaim * quantity).toLocaleString()} ${tokenLabel()} claim eligibility`,
       ].filter(Boolean),
-    [drop, quantity],
+    [drop, onchainMint, quantity],
   );
 
   function onMintClick() {
     if (!isConnected) {
       setConnectOpen(true);
+      return;
+    }
+    if (onchainMint) {
+      liveTx.start("Mint ACCC", 0, async () => {
+        if (!walletClient) throw new Error("Wallet is not ready.");
+        return walletClient.writeContract({
+          address: project.nftContract,
+          abi: acccNftAbi,
+          functionName: "mint",
+        });
+      }, (receipt) => {
+        const tokenId = tokenIdFromMintReceipt(receipt);
+        if (tokenId) setLiveTokenId(tokenId);
+        void nextId.refetch();
+        void ownedOnchain.refetch();
+      });
       return;
     }
     const nextQty = Math.min(quantity, walletLeft, remaining);
@@ -101,6 +150,12 @@ export function DropView({ drop }: { drop: Drop }) {
           <h1 className="text-[32px] font-semibold leading-10">{drop.name}</h1>
           <Badge tone={statusTone[drop.status]}>{statusLabel[drop.status]}</Badge>
         </div>
+        {onchainMint ? (
+          <p className="mt-2 text-sm text-text-secondary">
+            Testnet mint. Each NFT deploys an ERC-6551 account you can deposit
+            tokens into.
+          </p>
+        ) : null}
         <ProjectVideo
           src={drop.video ?? project.videos.mint}
           className="mt-6 aspect-[16/10] w-full"
@@ -110,7 +165,10 @@ export function DropView({ drop }: { drop: Drop }) {
 
       <aside className="h-fit space-y-5 rounded-lg border border-border bg-surface-1 p-5">
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <Meta label="Mint price" value={formatEth(drop.priceEth)} />
+          <Meta
+            label="Mint price"
+            value={onchainMint ? "Free" : formatEth(drop.priceEth)}
+          />
           <Meta label="Supply" value={drop.supply.toLocaleString()} />
           <Meta label="Minted" value={minted.toLocaleString()} />
           <Meta label="Per wallet" value={String(drop.maxPerWallet)} />
@@ -138,25 +196,27 @@ export function DropView({ drop }: { drop: Drop }) {
 
         {drop.status === "live" ? (
           <>
-            <div className="flex items-center justify-between rounded-md border border-border bg-bg px-3 py-2">
-              <button
-                type="button"
-                className="text-lg text-text-secondary"
-                onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-              >
-                −
-              </button>
-              <span className="tabular font-medium">{quantity}</span>
-              <button
-                type="button"
-                className="text-lg text-text-secondary"
-                onClick={() =>
-                  setQuantity((value) => Math.min(Math.max(maxQty, 1), value + 1))
-                }
-              >
-                +
-              </button>
-            </div>
+            {onchainMint ? null : (
+              <div className="flex items-center justify-between rounded-md border border-border bg-bg px-3 py-2">
+                <button
+                  type="button"
+                  className="text-lg text-text-secondary"
+                  onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                >
+                  −
+                </button>
+                <span className="tabular font-medium">{quantity}</span>
+                <button
+                  type="button"
+                  className="text-lg text-text-secondary"
+                  onClick={() =>
+                    setQuantity((value) => Math.min(Math.max(maxQty, 1), value + 1))
+                  }
+                >
+                  +
+                </button>
+              </div>
+            )}
             <p className="tabular text-sm text-text-secondary">{formatEth(total)}</p>
             {isConnected && walletLeft <= 0 ? (
               <p className="text-sm text-warning">
@@ -186,7 +246,11 @@ export function DropView({ drop }: { drop: Drop }) {
           </ul>
         </div>
 
-        {mine.some((holding) => holding.dropId === drop.id) ? (
+        {onchainMint && liveTokenId ? (
+          <Link href={accountPath(liveTokenId)} className="block text-sm text-forge-green">
+            Open NFT Account →
+          </Link>
+        ) : mine.some((holding) => holding.dropId === drop.id) ? (
           <Link href="/portfolio/" className="block text-sm text-forge-green">
             View in portfolio →
           </Link>
@@ -194,18 +258,28 @@ export function DropView({ drop }: { drop: Drop }) {
       </aside>
 
       <ConnectModal open={connectOpen} onClose={() => setConnectOpen(false)} />
-      <TransactionModal
-        tx={tx}
-        completeTitle="Mint complete"
-        completeBody={
-          mintedIds.length
-            ? `${mintedIds.length === 1 ? "Your NFT is" : "Your NFTs are"} in your portfolio${drop.includes.nftAccount ? ", each with an NFT Account" : ""}.`
-            : "Your mint is in your portfolio."
-        }
-        completeHref="/portfolio/"
-        completeLabel="View portfolio"
-        onComplete={() => undefined}
-      />
+      {onchainMint ? (
+        <TransactionModal
+          tx={liveTx}
+          completeTitle="Mint complete"
+          completeBody="Your NFT Account is onchain. Deposit test $ACCC or ETH into it."
+          completeHref={liveTokenId ? accountPath(liveTokenId) : "/portfolio/"}
+          completeLabel="View NFT Account"
+        />
+      ) : (
+        <TransactionModal
+          tx={tx}
+          completeTitle="Mint complete"
+          completeBody={
+            mintedIds.length
+              ? `${mintedIds.length === 1 ? "Your NFT is" : "Your NFTs are"} in your portfolio${drop.includes.nftAccount ? ", each with an NFT Account" : ""}.`
+              : "Your mint is in your portfolio."
+          }
+          completeHref="/portfolio/"
+          completeLabel="View portfolio"
+          onComplete={() => undefined}
+        />
+      )}
     </div>
   );
 }
