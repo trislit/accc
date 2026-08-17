@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC6551Account} from "../src/ERC6551Account.sol";
 import {ERC6551Registry} from "../src/ERC6551Registry.sol";
+import {AcccDistributor} from "../src/AcccDistributor.sol";
 import {AcccNft} from "../src/AcccNft.sol";
 import {AcccToken} from "../src/AcccToken.sol";
 
@@ -12,6 +13,7 @@ contract AcccTbaTest is Test {
     ERC6551Registry internal registry;
     ERC6551Account internal implementation;
     AcccNft internal nft;
+    AcccDistributor internal distributor;
     AcccToken internal token;
     address internal user = makeAddr("user");
 
@@ -21,7 +23,8 @@ contract AcccTbaTest is Test {
         registry = new ERC6551Registry();
         implementation = new ERC6551Account();
         nft = new AcccNft(address(registry), address(implementation));
-        token = new AcccToken();
+        distributor = new AcccDistributor(address(nft));
+        token = distributor.token();
     }
 
     function testMintCreatesTba() public {
@@ -39,16 +42,15 @@ contract AcccTbaTest is Test {
     }
 
     function testDepositAndWithdrawToken() public {
-        (, address tba) = nft.mint();
-        token.faucet();
-        token.transfer(tba, 100 ether);
-        assertEq(token.balanceOf(tba), 100 ether);
+        (uint256 tokenId, address tba) = nft.mint();
+        distributor.claimGenesis(tokenId);
+        assertEq(token.balanceOf(tba), 1000 ether);
 
         bytes memory data = abi.encodeCall(IERC20.transfer, (address(this), 40 ether));
         ERC6551Account(payable(tba)).execute(address(token), 0, data, 0);
 
-        assertEq(token.balanceOf(tba), 60 ether);
-        assertEq(token.balanceOf(address(this)), 900 ether + 40 ether);
+        assertEq(token.balanceOf(tba), 960 ether);
+        assertEq(token.balanceOf(address(this)), 40 ether);
     }
 
     function testEthDepositAndWithdraw() public {
@@ -64,10 +66,8 @@ contract AcccTbaTest is Test {
 
     function testNonOwnerCannotWithdraw() public {
         vm.prank(user);
-        (, address tba) = nft.mint();
-
-        token.faucet();
-        token.transfer(tba, 10 ether);
+        (uint256 tokenId, address tba) = nft.mint();
+        distributor.claimGenesis(tokenId);
 
         bytes memory data = abi.encodeCall(IERC20.transfer, (address(this), 10 ether));
         vm.expectRevert("Invalid signer");

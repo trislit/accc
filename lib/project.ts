@@ -5,7 +5,9 @@ import { ACTIVE_CHAIN_ID, CANONICAL_TBA_REGISTRY } from "./chain";
 export const LIVE_NFT =
   "0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5" as Address;
 export const LIVE_TOKEN =
-  "0x3EE8c0c19f6622e6a62f9F04a79cB92444719f71" as Address;
+  "0xc153e32f7f0dBe3131FECcC598a1EA57C64c5A99" as Address;
+export const LIVE_DISTRIBUTOR =
+  "0x56deD1a8d70893113Cff4289e204B142d4ce5eDA" as Address;
 const LIVE_TBA_IMPL =
   "0x8A0455E86536F57323866ed13c26febAb8ae3049" as Address;
 
@@ -46,7 +48,7 @@ export const project = {
   holders: 1842,
   mintPriceEth: liveContracts ? 0 : 0.08,
   maxPerWallet: 5,
-  claimPerNft: 2000,
+  claimPerNft: 1000,
   floorEth: 0.72,
   volume24hEth: 48.2,
   tokenPriceUsd: 0.084,

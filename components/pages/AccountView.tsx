@@ -3,7 +3,6 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { encodeFunctionData } from "viem";
 import { useAccount } from "wagmi";
 import { getWalletClient } from "wagmi/actions";
 import { Atmosphere } from "@/components/art/Atmosphere";
@@ -18,18 +17,32 @@ import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Tabs";
 import { robinhoodTestnet } from "@/lib/chain";
-import { acccTokenAbi, erc6551AccountAbi } from "@/lib/contracts";
+import { acccDistributorAbi } from "@/lib/contracts";
 import {
   useAcccBalance,
+  useDistributorStatus,
   useNativeEthBalance,
   useNftOwner,
   useTbaAddress,
 } from "@/lib/data/onchain";
-import { ethToUsd, formatUsd } from "@/lib/format";
-import { LIVE_NFT, LIVE_TOKEN, liveContracts, project, tokenLabel } from "@/lib/project";
+import { ethToUsd, formatTokenAmount, formatUsd } from "@/lib/format";
+import {
+  LIVE_DISTRIBUTOR,
+  LIVE_NFT,
+  LIVE_TOKEN,
+  liveContracts,
+  project,
+  tokenLabel,
+} from "@/lib/project";
 import { ZERO_ADDRESS } from "@/lib/tba";
 import { wagmiConfig } from "@/lib/wagmi";
 import type { NftAccount, TokenAsset } from "@/lib/types";
+
+function formatPending(value: number) {
+  return value.toLocaleString("en-US", {
+    maximumFractionDigits: 6,
+  });
+}
 
 function AccountInner() {
   const params = useSearchParams();
@@ -39,7 +52,10 @@ function AccountInner() {
   const tbaQuery = useTbaAddress(tokenId || undefined);
   const tbaEth = useNativeEthBalance(tbaQuery.address);
   const tbaToken = useAcccBalance(tbaQuery.address);
-  const faucetTx = useOnchainTransaction();
+  const dist = useDistributorStatus(tokenId || undefined);
+  const distTx = useOnchainTransaction();
+  const [completeTitle, setCompleteTitle] = useState("Done");
+  const [completeBody, setCompleteBody] = useState("");
   const [depositOpen, setDepositOpen] = useState(false);
 
   const isOwner =
@@ -90,38 +106,50 @@ function AccountInner() {
     tokenId,
   ]);
 
-  function onFaucet() {
-    const tba = tbaQuery.address;
-    if (!tba) return;
-    faucetTx.start(
-      `Mint test ${tokenLabel()} to NFT Account`,
-      0,
-      async () => {
-        const walletClient = await getWalletClient(wagmiConfig, {
-          chainId: robinhoodTestnet.id,
-        });
-        if (!walletClient) throw new Error("Wallet is not ready.");
-        return walletClient.writeContract({
-          address: tba,
-          abi: erc6551AccountAbi,
-          functionName: "execute",
-          args: [
-            LIVE_TOKEN,
-            BigInt(0),
-            encodeFunctionData({
-              abi: acccTokenAbi,
-              functionName: "faucet",
-            }),
-            0,
-          ],
-          chain: robinhoodTestnet,
-          account: walletClient.account,
-        });
-      },
-      () => {
-        void tbaToken.refetch();
-        void tbaEth.refetch();
-      },
+  function onDistributorWrite(
+    action: string,
+    functionName: "claimGenesis" | "harvest",
+    completeTitle: string,
+    completeBody: string,
+  ) {
+    if (!tokenId) return;
+    setCompleteTitle(completeTitle);
+    setCompleteBody(completeBody);
+    distTx.start(action, 0, async () => {
+      const walletClient = await getWalletClient(wagmiConfig, {
+        chainId: robinhoodTestnet.id,
+      });
+      if (!walletClient) throw new Error("Wallet is not ready.");
+      return walletClient.writeContract({
+        address: LIVE_DISTRIBUTOR,
+        abi: acccDistributorAbi,
+        functionName,
+        args: [BigInt(tokenId)],
+        chain: robinhoodTestnet,
+        account: walletClient.account,
+      });
+    }, () => {
+      void tbaToken.refetch();
+      void tbaEth.refetch();
+      void dist.refetch();
+    });
+  }
+
+  function onClaim() {
+    onDistributorWrite(
+      `Claim 1,000 ${tokenLabel()}`,
+      "claimGenesis",
+      "Claim complete",
+      `1,000 ${tokenLabel()} was minted into this NFT Account. Yield accrues on that grant while it stays here.`,
+    );
+  }
+
+  function onHarvest() {
+    onDistributorWrite(
+      `Harvest ${tokenLabel()}`,
+      "harvest",
+      "Harvest complete",
+      `Yield was minted into this NFT Account. Original principal is unchanged.`,
     );
   }
 
@@ -161,6 +189,10 @@ function AccountInner() {
     );
   }
 
+  const genesis = dist.genesisFormatted ?? 1000;
+  const eligible = dist.eligibleFormatted ?? 0;
+  const pending = dist.pendingFormatted ?? 0;
+
   return (
     <div className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -198,29 +230,51 @@ function AccountInner() {
               </>
             ) : null}
           </div>
+          {dist.claimed ? (
+            <div className="mt-5 rounded-lg border border-border bg-surface-1 p-4 text-sm">
+              <p className="text-xs text-text-muted">Earning principal</p>
+              <p className="mt-1 tabular font-medium">
+                {formatTokenAmount(eligible)} / {formatTokenAmount(genesis)}{" "}
+                {tokenLabel()}
+              </p>
+              <p className="mt-3 text-xs text-text-muted">Pending yield</p>
+              <p className="mt-1 tabular font-medium">
+                {formatPending(pending)} {tokenLabel()}
+              </p>
+              <p className="mt-2 text-xs text-text-secondary">
+                10% APY on remaining original grant only. Withdrawals cut it;
+                deposits do not restore it.
+              </p>
+            </div>
+          ) : null}
           <div className="mt-6 flex flex-wrap gap-2">
+            {isOwner && dist.claimed === false ? (
+              <Button onClick={onClaim} disabled={!tbaQuery.address}>
+                Claim 1,000 {tokenLabel()}
+              </Button>
+            ) : null}
+            {isOwner && dist.claimed ? (
+              <Button onClick={onHarvest} disabled={!tbaQuery.address}>
+                Harvest
+              </Button>
+            ) : null}
             {isOwner ? (
-              <>
-                <Button onClick={onFaucet} disabled={!tbaQuery.address}>
-                  Get test {tokenLabel()}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setDepositOpen(true)}
-                  disabled={!tbaQuery.address}
-                >
-                  Transfer to NFT
-                </Button>
-              </>
+              <Button
+                variant="secondary"
+                onClick={() => setDepositOpen(true)}
+                disabled={!tbaQuery.address}
+              >
+                Transfer to NFT
+              </Button>
             ) : null}
             <Link href="/mint/">
               <Button variant="secondary">Mint another</Button>
             </Link>
           </div>
-          {isOwner ? (
+          {isOwner && dist.claimed === false ? (
             <p className="mt-3 text-sm text-text-secondary">
-              Test {tokenLabel()} is minted into this NFT Account. Transfer more
-              in from your wallet, or withdraw if you want it there.
+              This NFT can claim 1,000 {tokenLabel()} once. Yield then accrues
+              only while that original grant stays in the NFT Account.
             </p>
           ) : null}
           {account ? (
@@ -232,7 +286,16 @@ function AccountInner() {
       </div>
 
       {account ? (
-        <NftAccountPanel account={account} isOwner={isOwner} live />
+        <NftAccountPanel
+          account={account}
+          isOwner={isOwner}
+          live
+          onTransfer={() => {
+            void tbaToken.refetch();
+            void tbaEth.refetch();
+            void dist.refetch();
+          }}
+        />
       ) : (
         <p className="text-sm text-text-muted">Loading NFT Account…</p>
       )}
@@ -246,14 +309,15 @@ function AccountInner() {
           onSuccess={() => {
             void tbaToken.refetch();
             void tbaEth.refetch();
+            void dist.refetch();
           }}
         />
       ) : null}
 
       <TransactionModal
-        tx={faucetTx}
-        completeTitle="Faucet complete"
-        completeBody={`${tokenLabel()} was minted into this NFT Account. Withdraw if you want it in your wallet.`}
+        tx={distTx}
+        completeTitle={completeTitle}
+        completeBody={completeBody}
         completeLabel="Done"
         onComplete={() => undefined}
       />

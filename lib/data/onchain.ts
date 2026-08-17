@@ -7,8 +7,13 @@ import {
   ROBINHOOD_TESTNET_ID,
   acccPublicClient,
 } from "../chain";
-import { acccNftAbi, acccTokenAbi } from "../contracts";
-import { LIVE_NFT, LIVE_TOKEN, liveContracts } from "../project";
+import { acccDistributorAbi, acccNftAbi, acccTokenAbi } from "../contracts";
+import {
+  LIVE_DISTRIBUTOR,
+  LIVE_NFT,
+  LIVE_TOKEN,
+  liveContracts,
+} from "../project";
 import { fetchAcccNft } from "./scanCollection";
 import type { Address, CollectionNFT } from "../types";
 
@@ -65,6 +70,71 @@ export function useAcccBalance(holder?: Address) {
     formatted:
       query.data !== undefined ? Number(formatUnits(query.data, 18)) : undefined,
     isLoading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
+  };
+}
+
+export function useDistributorStatus(tokenId?: string) {
+  const query = useQuery({
+    queryKey: ["accc-distributor", ROBINHOOD_TESTNET_ID, LIVE_DISTRIBUTOR, tokenId],
+    enabled: Boolean(
+      liveContracts &&
+        LIVE_DISTRIBUTOR &&
+        LIVE_DISTRIBUTOR !== "0x0000000000000000000000000000000000000000" &&
+        tokenId,
+    ),
+    refetchOnMount: "always",
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      if (!tokenId) throw new Error("No token");
+      const id = BigInt(tokenId);
+      const [claimed, eligible, pending, genesis] = await Promise.all([
+        acccPublicClient.readContract({
+          address: LIVE_DISTRIBUTOR,
+          abi: acccDistributorAbi,
+          functionName: "genesisClaimed",
+          args: [id],
+        }),
+        acccPublicClient.readContract({
+          address: LIVE_DISTRIBUTOR,
+          abi: acccDistributorAbi,
+          functionName: "eligiblePrincipal",
+          args: [id],
+        }),
+        acccPublicClient.readContract({
+          address: LIVE_DISTRIBUTOR,
+          abi: acccDistributorAbi,
+          functionName: "pendingYield",
+          args: [id],
+        }),
+        acccPublicClient.readContract({
+          address: LIVE_DISTRIBUTOR,
+          abi: acccDistributorAbi,
+          functionName: "GENESIS_AMOUNT",
+        }),
+      ]);
+      return {
+        claimed,
+        eligible,
+        pending,
+        genesis,
+        eligibleFormatted: Number(formatUnits(eligible, 18)),
+        pendingFormatted: Number(formatUnits(pending, 18)),
+        genesisFormatted: Number(formatUnits(genesis, 18)),
+      };
+    },
+  });
+
+  return {
+    claimed: query.data?.claimed,
+    eligible: query.data?.eligible,
+    pending: query.data?.pending,
+    genesis: query.data?.genesis,
+    eligibleFormatted: query.data?.eligibleFormatted,
+    pendingFormatted: query.data?.pendingFormatted,
+    genesisFormatted: query.data?.genesisFormatted,
+    isLoading: query.isLoading || query.isFetching,
     error: query.error instanceof Error ? query.error.message : undefined,
     refetch: query.refetch,
   };

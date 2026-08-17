@@ -15,7 +15,7 @@ This is **not** TwinForge. TwinForge stays the factory.
 - `/market` secondary listings
 - `/mint` genesis drop
 - `/nft/...` NFT + NFT Account + buy/list (showcase catalog)
-- `/account?tokenId=` live ERC-6551 account (deposit / withdraw)
+- `/account?tokenId=` live ERC-6551 account (claim / harvest / transfer / withdraw)
 - `/portfolio` ACCC holdings
 - `/held?id=` minted NFTs in this browser
 
@@ -42,7 +42,7 @@ npm run build
 cd contracts
 forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts --no-git
 forge test
-forge script script/Deploy.s.sol:Deploy --rpc-url https://rpc.testnet.chain.robinhood.com --broadcast --private-key $PRIVATE_KEY
+forge script script/DeployDistributor.s.sol:DeployDistributor --rpc-url https://rpc.testnet.chain.robinhood.com --broadcast
 ```
 
 Live testnet addresses are baked into [`lib/project.ts`](lib/project.ts). Override them with `.env.local` if you redeploy. Get testnet ETH from [the faucet](https://faucet.testnet.chain.robinhood.com/).
@@ -58,10 +58,11 @@ Copy `.env.example` to `.env.local` for local overrides. Cloudflare Git builds u
 | `NEXT_PUBLIC_WALLETCONNECT_ID` | Enables WalletConnect in the connect modal |
 | `NEXT_PUBLIC_NFT` | Live AcccNft address |
 | `NEXT_PUBLIC_TOKEN` | Live AcccToken address |
+| `NEXT_PUBLIC_DISTRIBUTOR` | Live AcccDistributor (per-NFT genesis + yield) |
 | `NEXT_PUBLIC_TBA_IMPLEMENTATION` | Live ERC6551Account implementation |
 | `NEXT_PUBLIC_TBA_REGISTRY` | Canonical ERC-6551 registry |
 
-Buy/list stay mocked. Mint, faucet, deposit, and withdraw are live when NFT/token/implementation addresses are set.
+Buy/list stay mocked. Mint, claim, harvest, deposit, and withdraw are live when NFT/token/implementation addresses are set.
 
 ## Cloudflare
 
@@ -72,14 +73,15 @@ After a deploy that includes the live addresses:
 1. Open the Cloudflare URL, go to **Mint**.
 2. Connect a wallet on **Robinhood Chain Testnet** (chain ID `46630`).
 3. That wallet needs testnet ETH from [the faucet](https://faucet.testnet.chain.robinhood.com/) (the deployer key is only for contracts; mint from your own wallet).
-4. Mint → **Open NFT Account** → **Get test $ACCC** → Deposit.
+4. Mint → **Open NFT Account** → **Claim 1,000 $ACCC** → Harvest / Withdraw.
 
 To rebuild without a code change, set these as Cloudflare **build** environment variables and retry the deployment:
 
 ```
 NEXT_PUBLIC_CHAIN_ID=46630
 NEXT_PUBLIC_NFT=0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5
-NEXT_PUBLIC_TOKEN=0x3EE8c0c19f6622e6a62f9F04a79cB92444719f71
+NEXT_PUBLIC_TOKEN=0xc153e32f7f0dBe3131FECcC598a1EA57C64c5A99
+NEXT_PUBLIC_DISTRIBUTOR=0x56deD1a8d70893113Cff4289e204B142d4ce5eDA
 NEXT_PUBLIC_TBA_IMPLEMENTATION=0x8A0455E86536F57323866ed13c26febAb8ae3049
 NEXT_PUBLIC_TBA_REGISTRY=0x000000006551c19487814612e58FE06813775758
 ```

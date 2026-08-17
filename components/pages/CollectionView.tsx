@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState, Tabs } from "@/components/ui/Tabs";
 import { useLiveCollection } from "@/lib/data/liveCollection";
 import { formatTokenAmount } from "@/lib/format";
-import { LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "@/lib/project";
+import { LIVE_DISTRIBUTOR, LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "@/lib/project";
 import { accountPath } from "@/lib/tba";
 
 export function CollectionView() {
@@ -176,12 +176,14 @@ export function CollectionView() {
           <div>
             <h2 className="text-2xl font-semibold">{tokenLabel()}</h2>
             <p className="text-sm text-text-secondary">
-              Testnet faucet token. NFT Accounts can hold it.
+              Each NFT can claim 1,000 {tokenLabel()} once into its NFT Account.
+              After that, 10% APY accrues only on remaining original principal —
+              withdrawing cuts rewards, transferring more in does not restore them.
             </p>
             <p className="mt-3 tabular text-3xl font-semibold">
               {formatTokenAmount(tokenSupply)}
             </p>
-            <p className="text-sm text-text-muted">Total minted via faucet</p>
+            <p className="text-sm text-text-muted">Total minted</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <MarketStat
@@ -192,8 +194,12 @@ export function CollectionView() {
           </div>
           <dl className="space-y-3 text-sm">
             <div>
-              <p className="text-text-muted">Contract</p>
+              <p className="text-text-muted">Token</p>
               <AddressDisplay address={LIVE_TOKEN} />
+            </div>
+            <div>
+              <p className="text-text-muted">Distributor</p>
+              <AddressDisplay address={LIVE_DISTRIBUTOR} />
             </div>
           </dl>
         </div>
