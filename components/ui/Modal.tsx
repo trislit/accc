@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { cx } from "@/lib/cx";
 
@@ -17,24 +17,39 @@ export function Modal({
   children: React.ReactNode;
   className?: string;
 }) {
+  const allowDismiss = useRef(false);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      allowDismiss.current = false;
+      return;
+    }
+    allowDismiss.current = false;
+    const enable = window.setTimeout(() => {
+      allowDismiss.current = true;
+    }, 400);
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.clearTimeout(enable);
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open, onClose]);
 
   if (!open) return null;
 
+  function dismiss() {
+    if (allowDismiss.current) onClose();
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div
         className="absolute inset-0 bg-black/70"
-        aria-label="Close"
-        onClick={onClose}
+        aria-hidden="true"
+        onClick={dismiss}
       />
       <div
         role="dialog"
@@ -43,6 +58,8 @@ export function Modal({
           "relative z-10 w-full max-w-md rounded-xl border border-border bg-surface-1 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]",
           className,
         )}
+        onClick={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           {title ? (

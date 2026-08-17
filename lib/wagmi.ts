@@ -8,8 +8,11 @@ const walletConnectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID;
 export const wagmiConfig = createConfig({
   chains: [robinhoodTestnet, robinhoodChain],
   connectors: [
-    injected({ target: "metaMask" }),
-    coinbaseWallet({ appName: project.name }),
+    injected(),
+    coinbaseWallet({
+      appName: project.name,
+      preference: "eoaOnly",
+    }),
     ...(walletConnectId
       ? [
           walletConnect({
