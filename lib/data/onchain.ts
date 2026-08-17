@@ -1,10 +1,17 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { erc20Abi, formatEther, formatUnits } from "viem";
-import { useAccount, useBalance, useReadContract, useReadContracts } from "wagmi";
+import {
+  useAccount,
+  useBalance,
+  usePublicClient,
+  useReadContract,
+  useReadContracts,
+} from "wagmi";
 import { activeChain } from "../chain";
 import { acccNftAbi, acccTokenAbi } from "../contracts";
-import { liveContracts, project } from "../project";
+import { LIVE_NFT, LIVE_TOKEN, liveContracts, project } from "../project";
 import type { Address, CollectionNFT } from "../types";
 
 export function useConnectedWallet() {
@@ -35,9 +42,9 @@ export function useNativeEthBalance(address?: Address) {
 }
 
 export function useAcccBalance(holder?: Address) {
-  const enabled = Boolean(liveContracts && project.tokenContract && holder);
+  const enabled = Boolean(liveContracts && holder);
   const { data, error, isLoading, refetch } = useReadContract({
-    address: project.tokenContract,
+    address: LIVE_TOKEN,
     abi: acccTokenAbi,
     functionName: "balanceOf",
     args: holder ? [holder] : undefined,
@@ -58,7 +65,7 @@ export function useAcccBalance(holder?: Address) {
 export function useNftOwner(tokenId?: string) {
   const enabled = Boolean(liveContracts && tokenId);
   const { data, error, isLoading, refetch } = useReadContract({
-    address: project.nftContract,
+    address: LIVE_NFT,
     abi: acccNftAbi,
     functionName: "ownerOf",
     args: tokenId ? [BigInt(tokenId)] : undefined,
@@ -77,7 +84,7 @@ export function useNftOwner(tokenId?: string) {
 export function useTbaAddress(tokenId?: string) {
   const enabled = Boolean(liveContracts && tokenId);
   const { data, error, isLoading, refetch } = useReadContract({
-    address: project.nftContract,
+    address: LIVE_NFT,
     abi: acccNftAbi,
     functionName: "accountOf",
     args: tokenId ? [BigInt(tokenId)] : undefined,
@@ -94,65 +101,68 @@ export function useTbaAddress(tokenId?: string) {
 }
 
 export function useOwnedAcccNfts(owner?: Address) {
-  const enabled = Boolean(liveContracts && owner);
-  const balance = useReadContract({
-    address: project.nftContract,
-    abi: acccNftAbi,
-    functionName: "balanceOf",
-    args: owner ? [owner] : undefined,
-    chainId: activeChain.id,
-    query: { enabled },
-  });
+  const publicClient = usePublicClient({ chainId: activeChain.id });
+  const enabled = Boolean(liveContracts && publicClient && owner);
 
-  const count = balance.data !== undefined ? Number(balance.data) : 0;
-  const tokens = useReadContracts({
-    allowFailure: true,
-    query: { enabled: enabled && count > 0 },
-    contracts: Array.from({ length: count }, (_, index) => ({
-      address: project.nftContract,
-      abi: acccNftAbi,
-      functionName: "tokenOfOwnerByIndex" as const,
-      args: owner ? ([owner, BigInt(index)] as const) : undefined,
-      chainId: activeChain.id,
-    })),
+  const query = useQuery({
+    queryKey: ["accc-owned", activeChain.id, LIVE_NFT, owner],
+    enabled,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!publicClient || !owner) return [];
+      const balance = await publicClient.readContract({
+        address: LIVE_NFT,
+        abi: acccNftAbi,
+        functionName: "balanceOf",
+        args: [owner],
+      });
+      const nfts: CollectionNFT[] = [];
+      for (let index = 0; index < Number(balance); index += 1) {
+        const tokenId = await publicClient.readContract({
+          address: LIVE_NFT,
+          abi: acccNftAbi,
+          functionName: "tokenOfOwnerByIndex",
+          args: [owner, BigInt(index)],
+        });
+        const account = await publicClient.readContract({
+          address: LIVE_NFT,
+          abi: acccNftAbi,
+          functionName: "accountOf",
+          args: [tokenId],
+        });
+        const id = String(tokenId);
+        nfts.push({
+          chainId: activeChain.id,
+          contract: LIVE_NFT,
+          tokenId: id,
+          collectionId: project.collectionId,
+          collectionName: project.collectionName,
+          verified: true,
+          owner,
+          name: `${project.nftPrefix} #${id}`,
+          artId: "wanderer-775",
+          listed: false,
+          traits: [],
+          nftAccount: {
+            address: account,
+            nft: { contract: LIVE_NFT, tokenId: id },
+            controller: owner,
+            assets: [],
+            estimatedTokenValue: 0,
+            estimatedNftValue: 0,
+            estimatedTotalValue: 0,
+          },
+        });
+      }
+      return nfts;
+    },
   });
-
-  const nfts: CollectionNFT[] = (tokens.data ?? [])
-    .filter((row) => row.status === "success")
-    .map((row) => {
-      const tokenId = String(row.result as bigint);
-      return {
-        chainId: project.chainId,
-        contract: project.nftContract,
-        tokenId,
-        collectionId: project.collectionId,
-        collectionName: project.collectionName,
-        verified: true,
-        owner: owner ?? project.nftContract,
-        name: `${project.nftPrefix} #${tokenId}`,
-        artId: "wanderer-775",
-        listed: false,
-        traits: [],
-        nftAccount: {
-          address: project.nftContract,
-          nft: { contract: project.nftContract, tokenId },
-          controller: owner ?? project.nftContract,
-          assets: [],
-          estimatedTokenValue: 0,
-          estimatedNftValue: 0,
-          estimatedTotalValue: 0,
-        },
-      };
-    });
 
   return {
-    nfts,
-    isLoading: balance.isLoading || tokens.isLoading,
-    error: balance.error?.message ?? tokens.error?.message,
-    refetch: () => {
-      void balance.refetch();
-      void tokens.refetch();
-    },
+    nfts: query.data ?? [],
+    isLoading: query.isLoading || query.isFetching,
+    error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
   };
 }
 
@@ -163,25 +173,25 @@ export function useDemoTokenBalance(holder?: Address) {
     query: { enabled },
     contracts: [
       {
-        address: project.tokenContract,
+        address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "name",
         chainId: activeChain.id,
       },
       {
-        address: project.tokenContract,
+        address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "symbol",
         chainId: activeChain.id,
       },
       {
-        address: project.tokenContract,
+        address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "decimals",
         chainId: activeChain.id,
       },
       {
-        address: project.tokenContract,
+        address: LIVE_TOKEN,
         abi: erc20Abi,
         functionName: "balanceOf",
         args: holder ? [holder] : undefined,
@@ -200,7 +210,7 @@ export function useDemoTokenBalance(holder?: Address) {
 
   return {
     configured: liveContracts,
-    contract: project.tokenContract,
+    contract: LIVE_TOKEN,
     name,
     symbol,
     decimals,

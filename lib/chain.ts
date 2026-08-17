@@ -52,7 +52,11 @@ export const robinhoodTestnet = defineChain({
       url: "https://explorer.testnet.chain.robinhood.com",
     },
   },
-  contracts: { multicall3: MULTICALL3 },
+  contracts: {
+    multicall3: {
+      address: "0xa432504b6F04Cafe775b09D8AA92e8dbe41Ec7a8",
+    },
+  },
 });
 
 export const activeChain =

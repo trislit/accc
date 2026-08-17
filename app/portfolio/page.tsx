@@ -150,20 +150,40 @@ export default function PortfolioPage() {
             <Stat label="Tokens" value={formatUsd(tokensUsd + liveEthUsd)} />
             <Stat label="NFT Accounts" value={formatUsd(accountsUsd)} />
           </div>
-          <NftSection owned={owned} hrefs={ownedHrefs} />
+          <NftSection
+            owned={owned}
+            hrefs={ownedHrefs}
+            loading={Boolean(useLiveHoldings && onchain.isLoading)}
+            error={useLiveHoldings ? onchain.error : undefined}
+          />
           <TokenTable rows={tokenRows} empty={isConnected && tokenRows.length === 0} />
-          <AccountsTable accounts={accounts} hrefs={ownedHrefs} />
+          <AccountsTable
+            accounts={accounts}
+            hrefs={ownedHrefs}
+            loading={Boolean(useLiveHoldings && onchain.isLoading)}
+          />
         </div>
       ) : null}
 
-      {tab === "nfts" ? <NftSection owned={owned} hrefs={ownedHrefs} /> : null}
+      {tab === "nfts" ? (
+        <NftSection
+          owned={owned}
+          hrefs={ownedHrefs}
+          loading={Boolean(useLiveHoldings && onchain.isLoading)}
+          error={useLiveHoldings ? onchain.error : undefined}
+        />
+      ) : null}
 
       {tab === "tokens" ? (
         <TokenTable rows={tokenRows} empty={isConnected && tokenRows.length === 0} />
       ) : null}
 
       {tab === "accounts" ? (
-        <AccountsTable accounts={accounts} hrefs={ownedHrefs} />
+        <AccountsTable
+          accounts={accounts}
+          hrefs={ownedHrefs}
+          loading={Boolean(useLiveHoldings && onchain.isLoading)}
+        />
       ) : null}
 
       {tab === "activity" ? (
@@ -188,10 +208,30 @@ export default function PortfolioPage() {
 function NftSection({
   owned,
   hrefs,
+  loading,
+  error,
 }: {
   owned: CollectionNFT[];
   hrefs?: Record<string, string>;
+  loading?: boolean;
+  error?: string;
 }) {
+  if (loading && owned.length === 0) {
+    return (
+      <EmptyState
+        title="Loading NFTs"
+        body="Reading Anti-Cabal Cabal Club tokens from Robinhood testnet."
+      />
+    );
+  }
+  if (error && owned.length === 0) {
+    return (
+      <EmptyCollection
+        title="Could not load NFTs"
+        body={error}
+      />
+    );
+  }
   if (owned.length === 0) {
     return (
       <EmptyCollection
@@ -295,10 +335,20 @@ function TokenTable({
 function AccountsTable({
   accounts,
   hrefs,
+  loading,
 }: {
   accounts: CollectionNFT[];
   hrefs?: Record<string, string>;
+  loading?: boolean;
 }) {
+  if (loading && accounts.length === 0) {
+    return (
+      <EmptyState
+        title="Loading NFT Accounts"
+        body="Reading ERC-6551 accounts for NFTs in this wallet."
+      />
+    );
+  }
   if (accounts.length === 0) {
     return (
       <EmptyCollection
