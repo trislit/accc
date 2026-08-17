@@ -47,6 +47,11 @@ export default function HomePage() {
                 View collection
               </Button>
             </Link>
+            <Link href="/plan/">
+              <Button size="lg" variant="secondary">
+                The plan
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

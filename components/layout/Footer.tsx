@@ -18,6 +18,9 @@ export function Footer() {
             <Link href="/mint/" className="hover:text-text-primary">
               Mint
             </Link>
+            <Link href="/plan/" className="hover:text-text-primary">
+              Plan
+            </Link>
           </div>
           <div className="flex items-center gap-4 text-text-secondary">
             <a href={project.links.x} className="hover:text-text-primary" aria-label="X">

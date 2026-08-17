@@ -17,7 +17,7 @@ This is **not** TwinForge. TwinForge stays the factory.
 - `/nft/...` NFT + NFT Account + buy/list (showcase catalog)
 - `/account?tokenId=` live ERC-6551 account (claim / harvest / transfer / withdraw)
 - `/portfolio` ACCC holdings
-- `/held?id=` minted NFTs in this browser
+- `/plan` public pitch and go-to-market
 
 ## Local
 

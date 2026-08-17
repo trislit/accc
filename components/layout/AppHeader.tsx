@@ -11,6 +11,7 @@ const nav = [
   { href: "/collection/", label: "Collection" },
   { href: "/market/", label: "Market" },
   { href: "/mint/", label: "Mint" },
+  { href: "/plan/", label: "Plan" },
 ];
 
 export function AppHeader() {

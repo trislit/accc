@@ -16,6 +16,10 @@ export function mintPath(dropId?: string) {
   return dropId ? `/mint/?id=${encodeURIComponent(dropId)}` : "/mint/";
 }
 
+export function planPath() {
+  return "/plan/";
+}
+
 export function itemPath(nft: Pick<CollectionNFT, "chainId" | "contract" | "tokenId">) {
   return nftPath(nft);
 }
