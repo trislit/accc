@@ -20,8 +20,7 @@ export const LIVE_TOKEN =
 const LIVE_TBA_IMPL =
   "0x8A0455E86536F57323866ed13c26febAb8ae3049" as Address;
 
-function envAddress(name: string, fallback: Address): Address {
-  const value = process.env[name];
+function envAddress(value: string | undefined, fallback: Address): Address {
   return value && /^0x[a-fA-F0-9]{40}$/.test(value)
     ? (value as Address)
     : fallback;
@@ -42,14 +41,14 @@ export const project = {
   tokenName: "ACCC",
   tokenSymbol: "ACCC",
   chainId: ACTIVE_CHAIN_ID,
-  nftContract: envAddress("NEXT_PUBLIC_NFT", LIVE_NFT),
-  tokenContract: envAddress("NEXT_PUBLIC_TOKEN", LIVE_TOKEN),
+  nftContract: envAddress(process.env.NEXT_PUBLIC_NFT, LIVE_NFT),
+  tokenContract: envAddress(process.env.NEXT_PUBLIC_TOKEN, LIVE_TOKEN),
   tbaImplementation: envAddress(
-    "NEXT_PUBLIC_TBA_IMPLEMENTATION",
+    process.env.NEXT_PUBLIC_TBA_IMPLEMENTATION,
     LIVE_TBA_IMPL,
   ),
   tbaRegistry: envAddress(
-    "NEXT_PUBLIC_TBA_REGISTRY",
+    process.env.NEXT_PUBLIC_TBA_REGISTRY,
     CANONICAL_TBA_REGISTRY,
   ),
   treasury: "0x7ea5a1a0de7ea5a1a0de7ea5a1a0de7ea5a1a0de" as Address,
