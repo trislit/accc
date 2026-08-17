@@ -6,12 +6,19 @@ export const DEMO_OWNER: Address =
 export const DEMO_CREATOR: Address =
   "0x8a21f4ca1fb44b1dd8516cf4c6f2e2e7c91af91a";
 
+/** Mock catalog listings only. Live mint/account use LIVE_* below. */
 export const SHOWCASE_NFT =
   "0x71f3a91b4c2d8e9a7b6c5d4e3f2a1b0c9d8e7f6a" as Address;
 export const SHOWCASE_TOKEN =
   "0xa5e1c0de1234567890abcdef1234567890abcdef" as Address;
-const SHOWCASE_TBA_IMPL =
-  "0x6551c0de6551c0de6551c0de6551c0de6551c0de" as Address;
+
+/** Robinhood testnet (46630). Public addresses, safe to bake into the static export. */
+export const LIVE_NFT =
+  "0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5" as Address;
+export const LIVE_TOKEN =
+  "0x3EE8c0c19f6622e6a62f9F04a79cB92444719f71" as Address;
+const LIVE_TBA_IMPL =
+  "0x8A0455E86536F57323866ed13c26febAb8ae3049" as Address;
 
 function envAddress(name: string, fallback: Address): Address {
   const value = process.env[name];
@@ -20,10 +27,7 @@ function envAddress(name: string, fallback: Address): Address {
     : fallback;
 }
 
-export const liveContracts = Boolean(
-  process.env.NEXT_PUBLIC_NFT &&
-    /^0x[a-fA-F0-9]{40}$/.test(process.env.NEXT_PUBLIC_NFT),
-);
+export const liveContracts = true;
 
 export const project = {
   name: "ACCC",
@@ -38,11 +42,11 @@ export const project = {
   tokenName: "ACCC",
   tokenSymbol: "ACCC",
   chainId: ACTIVE_CHAIN_ID,
-  nftContract: envAddress("NEXT_PUBLIC_NFT", SHOWCASE_NFT),
-  tokenContract: envAddress("NEXT_PUBLIC_TOKEN", SHOWCASE_TOKEN),
+  nftContract: envAddress("NEXT_PUBLIC_NFT", LIVE_NFT),
+  tokenContract: envAddress("NEXT_PUBLIC_TOKEN", LIVE_TOKEN),
   tbaImplementation: envAddress(
     "NEXT_PUBLIC_TBA_IMPLEMENTATION",
-    SHOWCASE_TBA_IMPL,
+    LIVE_TBA_IMPL,
   ),
   tbaRegistry: envAddress(
     "NEXT_PUBLIC_TBA_REGISTRY",
