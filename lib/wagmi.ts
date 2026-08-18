@@ -23,8 +23,13 @@ export const wagmiConfig = createConfig({
       : []),
   ],
   transports: {
-    [robinhoodTestnet.id]: http(robinhoodTestnet.rpcUrls.default.http[0]),
-    [robinhoodChain.id]: http(robinhoodChain.rpcUrls.default.http[0]),
+    [robinhoodTestnet.id]: http(robinhoodTestnet.rpcUrls.default.http[0], {
+      batch: false,
+    }),
+    [robinhoodChain.id]: http(robinhoodChain.rpcUrls.default.http[0], {
+      batch: false,
+    }),
   },
+  batch: { multicall: false },
   ssr: true,
 });

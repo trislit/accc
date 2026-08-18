@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Atmosphere } from "@/components/art/Atmosphere";
 import { ProjectVideo } from "@/components/art/ProjectVideo";
 import { Badge } from "@/components/ui/Badge";
-import { useHoldings } from "@/lib/useHoldings";
+import { useAcccMintStats } from "@/lib/data/onchain";
 import { formatEth } from "@/lib/format";
 import { mintPath } from "@/lib/paths";
 import type { Drop } from "@/lib/types";
@@ -22,10 +22,10 @@ const labels = {
 } as const;
 
 export function DropCard({ drop }: { drop: Drop }) {
-  const holdings = useHoldings();
-  const minted =
-    drop.minted + holdings.filter((holding) => holding.dropId === drop.id).length;
-  const pct = Math.min(100, Math.round((minted / drop.supply) * 100));
+  const stats = useAcccMintStats();
+  const minted = drop.status === "live" ? stats.minted : drop.minted;
+  const mintedLabel =
+    minted === undefined && stats.isLoading ? "—" : (minted ?? 0).toLocaleString();
 
   return (
     <Link
@@ -43,17 +43,9 @@ export function DropCard({ drop }: { drop: Drop }) {
           <Badge tone={tones[drop.status]}>{labels[drop.status]}</Badge>
         </div>
         <p className="tabular text-sm">{formatEth(drop.priceEth)}</p>
-        <div>
-          <div className="mb-1 flex justify-between text-xs text-text-muted">
-            <span>
-              {minted.toLocaleString()} / {drop.supply.toLocaleString()}
-            </span>
-            <span>{pct}%</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-sm bg-surface-3">
-            <div className="h-full bg-forge-green" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
+        <p className="text-xs text-text-muted">
+          {mintedLabel} minted · open supply
+        </p>
       </div>
     </Link>
   );

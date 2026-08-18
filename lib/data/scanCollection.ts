@@ -3,11 +3,8 @@ import { ROBINHOOD_TESTNET_ID, acccPublicClient } from "../chain";
 import { acccNftAbi, acccTokenAbi } from "../contracts";
 import { LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "../project";
 import { accountPath } from "../tba";
-import type { ActivityItem, CollectionNFT, TokenAsset } from "../types";
+import type { ActivityItem, Address, CollectionNFT, TokenAsset } from "../types";
 
-const mintedEvent = parseAbiItem(
-  "event Minted(address indexed to, uint256 indexed tokenId, address account)",
-);
 const nftTransferEvent = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
 );
@@ -92,53 +89,48 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
   };
 }
 
+export async function fetchAcccMintStats(owner?: Address) {
+  const [nextId, totalSupply, owned] = await Promise.all([
+    acccPublicClient.readContract({
+      address: LIVE_NFT,
+      abi: acccNftAbi,
+      functionName: "nextId",
+    }),
+    acccPublicClient.readContract({
+      address: LIVE_NFT,
+      abi: acccNftAbi,
+      functionName: "totalSupply",
+    }),
+    owner
+      ? acccPublicClient.readContract({
+          address: LIVE_NFT,
+          abi: acccNftAbi,
+          functionName: "balanceOf",
+          args: [owner],
+        })
+      : Promise.resolve(undefined),
+  ]);
+  return {
+    nextId: Number(nextId),
+    minted: Number(totalSupply),
+    owned: owned === undefined ? 0 : Number(owned),
+  };
+}
+
 async function scanMintedTokenIds(): Promise<bigint[]> {
-  try {
-    const logs = await acccPublicClient.getLogs({
-      address: LIVE_NFT,
-      event: mintedEvent,
-      fromBlock: BigInt(0),
-      toBlock: "latest",
-    });
-    const ids = logs
-      .map((log) => log.args.tokenId)
-      .filter((id): id is bigint => id !== undefined);
-    if (ids.length) {
-      return [...new Set(ids.map((id) => id.toString()))]
-        .map((id) => BigInt(id))
-        .sort((a, b) => (a > b ? -1 : a < b ? 1 : 0));
-    }
-  } catch {
-    /* fall through */
-  }
-
-  try {
-    const logs = await acccPublicClient.getLogs({
-      address: LIVE_NFT,
-      event: nftTransferEvent,
-      args: { from: zeroAddress },
-      fromBlock: BigInt(0),
-      toBlock: "latest",
-    });
-    const ids = logs
-      .map((log) => log.args.tokenId)
-      .filter((id): id is bigint => id !== undefined);
-    if (ids.length) {
-      return [...new Set(ids.map((id) => id.toString()))]
-        .map((id) => BigInt(id))
-        .sort((a, b) => (a > b ? -1 : a < b ? 1 : 0));
-    }
-  } catch {
-    /* fall through */
-  }
-
-  const nextId = await acccPublicClient.readContract({
-    address: LIVE_NFT,
-    abi: acccNftAbi,
-    functionName: "nextId",
-  });
-  const minted = Number(nextId);
-  return Array.from({ length: minted }, (_, index) => BigInt(minted - index));
+  const stats = await fetchAcccMintStats();
+  if (stats.minted <= 0) return [];
+  const ids = await Promise.all(
+    Array.from({ length: stats.minted }, (_, index) =>
+      acccPublicClient.readContract({
+        address: LIVE_NFT,
+        abi: acccNftAbi,
+        functionName: "tokenByIndex",
+        args: [BigInt(index)],
+      }),
+    ),
+  );
+  return [...ids].sort((a, b) => (a > b ? -1 : a < b ? 1 : 0));
 }
 
 async function fetchActivity(tbas: Set<string>): Promise<ActivityItem[]> {
@@ -251,7 +243,7 @@ export async function fetchLiveCollection(): Promise<LiveCollection> {
   }
   return {
     nfts,
-    minted: nfts.length,
+    minted: tokenIds.length,
     holders,
     tokenSupply: Number(formatUnits(tokenSupplyWei, 18)),
     activity,

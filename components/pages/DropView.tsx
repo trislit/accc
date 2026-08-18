@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useAccount, useReadContract } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAccount } from "wagmi";
 import { getWalletClient } from "wagmi/actions";
 import { ProjectVideo } from "@/components/art/ProjectVideo";
 import {
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { ConnectModal } from "@/components/wallet/WalletControls";
 import { acccNftAbi } from "@/lib/contracts";
 import { activeChain, explorerAddressUrl } from "@/lib/chain";
+import { useAcccMintStats } from "@/lib/data/onchain";
 import { LIVE_NFT, project } from "@/lib/project";
 import { accountPath, tokenIdFromMintReceipt } from "@/lib/tba";
 import { wagmiConfig } from "@/lib/wagmi";
@@ -32,34 +34,16 @@ const statusLabel = {
 } as const;
 
 export function DropView({ drop }: { drop: Drop }) {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const liveTx = useOnchainTransaction();
+  const queryClient = useQueryClient();
   const [connectOpen, setConnectOpen] = useState(false);
   const [liveTokenId, setLiveTokenId] = useState<string>();
   const onchainMint = drop.status === "live";
-
-  const nextId = useReadContract({
-    address: LIVE_NFT,
-    abi: acccNftAbi,
-    functionName: "nextId",
-    chainId: activeChain.id,
-    query: { enabled: onchainMint },
-  });
-  const ownedOnchain = useReadContract({
-    address: LIVE_NFT,
-    abi: acccNftAbi,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-    chainId: activeChain.id,
-    query: { enabled: onchainMint && Boolean(address) },
-  });
-
-  const minted = onchainMint ? Number(nextId.data ?? 0) : drop.minted;
-  const remaining = Math.max(0, drop.supply - minted);
-  const already = onchainMint ? Number(ownedOnchain.data ?? 0) : 0;
-  const walletLeft = Math.max(0, drop.maxPerWallet - already);
-  const canMint =
-    drop.status === "live" && remaining > 0 && (!isConnected || walletLeft > 0);
+  const stats = useAcccMintStats();
+  const minted = onchainMint ? stats.minted : drop.minted;
+  const mintedLabel =
+    minted === undefined && stats.isLoading ? "—" : (minted ?? 0).toLocaleString();
 
   const includes = useMemo(
     () =>
@@ -91,8 +75,9 @@ export function DropView({ drop }: { drop: Drop }) {
     }, (receipt) => {
       const tokenId = tokenIdFromMintReceipt(receipt);
       if (tokenId) setLiveTokenId(tokenId);
-      void nextId.refetch();
-      void ownedOnchain.refetch();
+      void stats.refetch();
+      void queryClient.invalidateQueries({ queryKey: ["accc-collection"] });
+      void queryClient.invalidateQueries({ queryKey: ["accc-owned"] });
     });
   }
 
@@ -118,8 +103,8 @@ export function DropView({ drop }: { drop: Drop }) {
         </div>
         {onchainMint ? (
           <p className="mt-2 text-sm text-text-secondary">
-            Testnet mint. Each NFT deploys an ERC-6551 account you can deposit
-            tokens into.
+            Testnet mint against AcccNft. Each NFT deploys an ERC-6551 account
+            you can deposit tokens into. The contract has no supply cap.
           </p>
         ) : null}
         <ProjectVideo
@@ -132,24 +117,13 @@ export function DropView({ drop }: { drop: Drop }) {
       <aside className="h-fit space-y-5 rounded-lg border border-border bg-surface-1 p-5">
         <div className="grid grid-cols-2 gap-3 text-sm">
           <Meta label="Mint price" value="Free" />
-          <Meta label="Supply" value={drop.supply.toLocaleString()} />
-          <Meta label="Minted" value={minted.toLocaleString()} />
-          <Meta label="Per wallet" value={String(drop.maxPerWallet)} />
+          <Meta label="Supply" value="Open" />
+          <Meta label="Minted" value={mintedLabel} />
+          <Meta label="Network" value="RH testnet" />
         </div>
-        <div>
-          <div className="mb-1 flex justify-between text-xs text-text-muted">
-            <span>
-              {minted.toLocaleString()} / {drop.supply.toLocaleString()}
-            </span>
-            <span>{Math.round((minted / drop.supply) * 100)}%</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-sm bg-surface-3">
-            <div
-              className="h-full bg-forge-green"
-              style={{ width: `${Math.min(100, (minted / drop.supply) * 100)}%` }}
-            />
-          </div>
-        </div>
+        {stats.error ? (
+          <p className="text-sm text-error">{stats.error}</p>
+        ) : null}
 
         {drop.status === "upcoming" ? (
           <p className="text-sm text-text-secondary">
@@ -160,12 +134,7 @@ export function DropView({ drop }: { drop: Drop }) {
         {drop.status === "live" ? (
           <>
             <p className="tabular text-sm text-text-secondary">0 ETH</p>
-            {isConnected && walletLeft <= 0 ? (
-              <p className="text-sm text-warning">
-                This wallet already minted its maximum for this drop.
-              </p>
-            ) : null}
-            <Button className="w-full" disabled={!canMint && isConnected} onClick={onMintClick}>
+            <Button className="w-full" onClick={onMintClick}>
               {isConnected ? "Mint on testnet" : "Connect to mint"}
             </Button>
             <a

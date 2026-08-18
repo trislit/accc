@@ -1,25 +1,18 @@
-# ACCC — Admin-gated tools
+# ACCC — Live mint stats
 
-- [x] Wallet-gated `/admin` to add/edit tool links and access levels
-- [x] Community + desktop + upcoming dev tools in the catalog
-- [x] Tools page grouped; external links open in a new tab
-
-- [x] TokenSmart desktop live at https://desktop.tokensmart.co (external, new tab)
-- [x] Tools card shows NFT / $ACCC / genesis perks unlocked on TokenSmart
+- [x] Mint page reads AcccNft `totalSupply` / `nextId` via the testnet public client
+- [x] Collection scan uses ERC-721 enumerable `tokenByIndex` instead of mock `minted: 0`
+- [x] Drop card uses live minted count; no fake per-wallet cap
+- [x] `/held` mock holdings redirect to `/portfolio`
 
 ## Review
 
-Yes to an admin link board. No to a general CMS.
+The mint page showed **0 minted** because it treated a wagmi `nextId` miss as zero, and the drop catalog still had `minted: 0`. AcccNft on testnet currently has `nextId = 2` and `totalSupply = 2` (token ids 1 and 2).
 
-This site is a static export, so an admin change is real for everyone only after `tools` JSON is deployed (or later, Cloudflare KV). Wallet gates on `/tools` are membership UX, not secret URLs — invite links still ship in the client bundle.
-
-Default admin: `0x3872ff66dF4b9570F4e58FB1234a717dFe1334a9` (override with `NEXT_PUBLIC_ADMINS`).
-
-https:// URLs on a live tool open in a new tab (`isExternalHref`). TokenSmart is baked as live with no club-site gate so anyone can reach the desktop; the card explains that ACCC NFTs, $ACCC total, and genesis held in an NFT Account unlock extra programs there.
+The contract has no supply cap and no max-per-wallet, so the UI now shows open supply and the live `totalSupply`. Marketplace buy/list on `NftView` is still a showcase (that page redirects to `/account`).
 
 ## How to verify
 
-1. Connect the admin wallet → wallet menu → Admin
-2. Add Telegram / Discord / TokenSmart URLs, set NFT or genesis gates, Publish on this device
-3. Open `/tools/` — TokenSmart desktop should open `https://desktop.tokensmart.co` in a new tab and show the three unlock rows
-4. Download JSON and put it in `lib/data/tools-catalog.json` to ship other links
+1. Open `/mint/` — Minted should be **2** (or current `totalSupply`), not 0
+2. Home and `/collection/` list both NFTs
+3. Mint another token; the count increments after the receipt

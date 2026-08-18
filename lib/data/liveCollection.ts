@@ -5,7 +5,7 @@ import { ROBINHOOD_TESTNET_ID } from "../chain";
 import { LIVE_DISTRIBUTOR, LIVE_NFT, LIVE_TOKEN } from "../project";
 import { fetchLiveCollection } from "./scanCollection";
 
-export { fetchAcccNft, fetchLiveCollection } from "./scanCollection";
+export { fetchAcccNft, fetchAcccMintStats, fetchLiveCollection } from "./scanCollection";
 export type { LiveCollection } from "./scanCollection";
 
 export function useLiveCollection() {

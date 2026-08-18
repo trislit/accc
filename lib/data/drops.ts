@@ -7,9 +7,9 @@ export const drops: Drop[] = [
     name: `Genesis ${project.collectionName}`,
     status: "live",
     priceEth: 0,
-    supply: project.supply,
+    supply: 0,
     minted: 0,
-    maxPerWallet: project.maxPerWallet,
+    maxPerWallet: 0,
     artId: "wanderer-775",
     video: project.videos.mint,
     includes: {
