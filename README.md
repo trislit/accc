@@ -18,6 +18,8 @@ This is **not** TwinForge. TwinForge stays the factory.
 - `/account?tokenId=` live ERC-6551 account (claim / harvest / transfer / withdraw)
 - `/portfolio` ACCC holdings
 - `/plan` public pitch and go-to-market
+- `/tools` gated club tools (NFT, $ACCC total, genesis still in the NFT Account)
+- `/admin` administrator link board (wallet allowlist)
 
 ## Local
 
@@ -60,7 +62,10 @@ Copy `.env.example` to `.env.local` for local overrides. Cloudflare Git builds u
 | `NEXT_PUBLIC_TOKEN` | Live AcccToken address |
 | `NEXT_PUBLIC_DISTRIBUTOR` | Live AcccDistributor (per-NFT genesis + yield) |
 | `NEXT_PUBLIC_TBA_IMPLEMENTATION` | Live ERC6551Account implementation |
-| `NEXT_PUBLIC_TBA_REGISTRY` | Canonical ERC-6551 registry |
+| `NEXT_PUBLIC_ADMINS` | Comma-separated wallets that can open `/admin` |
+| `NEXT_PUBLIC_TELEGRAM` | Member Telegram URL (makes the Telegram tool live) |
+| `NEXT_PUBLIC_DISCORD` | Member Discord URL |
+| `NEXT_PUBLIC_TOKENSMART` | TokenSmart desktop URL |
 
 Buy/list stay mocked. Mint, claim, harvest, deposit, and withdraw are live when NFT/token/implementation addresses are set.
 

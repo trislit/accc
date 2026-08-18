@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
+import { isAdminAddress } from "@/lib/admins";
 import { activeChain, isTestnet } from "@/lib/chain";
 import { abbreviateAddress } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
@@ -118,6 +119,7 @@ export function WalletControls() {
   const { disconnect } = useDisconnect();
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
+  const admin = isAdminAddress(address);
 
   return (
     <>
@@ -159,6 +161,22 @@ export function WalletControls() {
               >
                 My tokens
               </Link>
+              <Link
+                href="/tools/"
+                className="block px-4 py-2 text-sm hover:bg-surface-3"
+                onClick={() => setMenu(false)}
+              >
+                Tools
+              </Link>
+              {admin ? (
+                <Link
+                  href="/admin/"
+                  className="block px-4 py-2 text-sm hover:bg-surface-3"
+                  onClick={() => setMenu(false)}
+                >
+                  Admin
+                </Link>
+              ) : null}
               <Link
                 href="/collection/"
                 className="block px-4 py-2 text-sm hover:bg-surface-3"

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Layers, Sparkles, UserRound } from "lucide-react";
+import { Layers, Sparkles, UserRound, Wrench } from "lucide-react";
 import { cx } from "@/lib/cx";
 
 const items = [
   { href: "/collection/", label: "Collection", icon: Layers },
-  { href: "/market/", label: "Market", icon: Compass },
   { href: "/mint/", label: "Mint", icon: Sparkles },
+  { href: "/tools/", label: "Tools", icon: Wrench },
   { href: "/portfolio/", label: "Me", icon: UserRound },
 ];
 

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "accounts",
+    "name": "NFT Accounts",
+    "summary": "Open the membership seat. Each NFT is an onchain account that can hold $ACCC.",
+    "group": "club",
+    "status": "live",
+    "access": { "nft": 1 },
+    "href": "/portfolio/"
+  },
+  {
+    "id": "claim",
+    "name": "Claim & harvest",
+    "summary": "Claim the 1,000 $ACCC genesis grant into the NFT Account, then harvest yield on what stays.",
+    "group": "club",
+    "status": "live",
+    "access": { "nft": 1 },
+    "href": "/portfolio/"
+  },
+  {
+    "id": "collection",
+    "name": "Collection",
+    "summary": "Browse mints, holders, and $ACCC sitting in NFT Accounts.",
+    "group": "club",
+    "status": "live",
+    "access": {},
+    "href": "/collection/"
+  },
+  {
+    "id": "tokensmart",
+    "name": "TokenSmart desktop",
+    "summary": "Desktop for watching wallets, tokens, and NFT Accounts. Member access.",
+    "group": "club",
+    "status": "soon",
+    "access": { "nft": 1 }
+  },
+  {
+    "id": "telegram",
+    "name": "Telegram",
+    "summary": "Member Telegram. NFT holders only.",
+    "group": "community",
+    "status": "soon",
+    "access": { "nft": 1 }
+  },
+  {
+    "id": "discord",
+    "name": "Discord",
+    "summary": "Member Discord. NFT holders only.",
+    "group": "community",
+    "status": "soon",
+    "access": { "nft": 1 }
+  },
+  {
+    "id": "launch-desk",
+    "name": "Launch desk",
+    "summary": "Public mint, membership NFT, and NFT Account setup — the rails ACCC used on itself.",
+    "group": "dev",
+    "status": "soon",
+    "access": { "nft": 1 }
+  },
+  {
+    "id": "distribution",
+    "name": "Distribution studio",
+    "summary": "Genesis grants and yield schedules other teams can run without a private allocation list.",
+    "group": "dev",
+    "status": "soon",
+    "access": { "accc": 1000 }
+  },
+  {
+    "id": "genesis-lounge",
+    "name": "Genesis lounge",
+    "summary": "Member-only desk for holders who still keep original genesis $ACCC in the NFT Account.",
+    "group": "dev",
+    "status": "soon",
+    "access": { "nft": 1, "genesis": 1000 }
+  },
+  {
+    "id": "liquidity",
+    "name": "Liquidity rails",
+    "summary": "Listing and buyback plumbing funded by tool revenue. Reserved for accounts that kept principal.",
+    "group": "dev",
+    "status": "soon",
+    "access": { "genesis": 500 }
+  },
+  {
+    "id": "factory",
+    "name": "Factory license",
+    "summary": "The same stack ACCC ships with, sold as software so independent teams do not need a cabal.",
+    "group": "dev",
+    "status": "soon",
+    "access": { "accc": 5000 }
+  }
+]

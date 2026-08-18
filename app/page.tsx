@@ -52,6 +52,11 @@ export default function HomePage() {
                 The plan
               </Button>
             </Link>
+            <Link href="/tools/">
+              <Button size="lg" variant="secondary">
+                Tools
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

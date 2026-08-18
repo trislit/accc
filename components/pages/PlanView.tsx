@@ -315,6 +315,9 @@ export function PlanView() {
           membership. Anyone can keep principal in the NFT. Anyone can later
           license the tools. The club captures value when those tools get used.
         </p>
+        <Link href="/tools/">
+          <Button>Open tools</Button>
+        </Link>
       </section>
 
       <section id="roadmap" className="scroll-mt-36 space-y-4">

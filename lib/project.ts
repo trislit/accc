@@ -66,9 +66,11 @@ export const project = {
     mint: "/media/accc-5.mp4",
   },
   links: {
-    website: "https://example.com",
-    x: "https://x.com",
-    discord: "https://discord.com",
+    website: process.env.NEXT_PUBLIC_WEBSITE ?? "",
+    x: process.env.NEXT_PUBLIC_X ?? "",
+    discord: process.env.NEXT_PUBLIC_DISCORD ?? "",
+    telegram: process.env.NEXT_PUBLIC_TELEGRAM ?? "",
+    tokensmart: process.env.NEXT_PUBLIC_TOKENSMART ?? "",
   },
   live: liveContracts,
 };

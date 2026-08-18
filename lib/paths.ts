@@ -20,6 +20,14 @@ export function planPath() {
   return "/plan/";
 }
 
+export function toolsPath() {
+  return "/tools/";
+}
+
+export function adminPath() {
+  return "/admin/";
+}
+
 export function itemPath(nft: Pick<CollectionNFT, "chainId" | "contract" | "tokenId">) {
   return nftPath(nft);
 }

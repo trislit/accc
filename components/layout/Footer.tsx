@@ -18,20 +18,34 @@ export function Footer() {
             <Link href="/mint/" className="hover:text-text-primary">
               Mint
             </Link>
+            <Link href="/tools/" className="hover:text-text-primary">
+              Tools
+            </Link>
             <Link href="/plan/" className="hover:text-text-primary">
               Plan
             </Link>
           </div>
           <div className="flex items-center gap-4 text-text-secondary">
-            <a href={project.links.x} className="hover:text-text-primary" aria-label="X">
-              𝕏
-            </a>
-            <a href={project.links.discord} className="hover:text-text-primary">
-              Discord
-            </a>
-            <a href={project.links.website} className="hover:text-text-primary">
-              Web
-            </a>
+            {project.links.x ? (
+              <a href={project.links.x} className="hover:text-text-primary" aria-label="X">
+                𝕏
+              </a>
+            ) : null}
+            {project.links.discord ? (
+              <a href={project.links.discord} className="hover:text-text-primary">
+                Discord
+              </a>
+            ) : null}
+            {project.links.telegram ? (
+              <a href={project.links.telegram} className="hover:text-text-primary">
+                Telegram
+              </a>
+            ) : null}
+            {project.links.website ? (
+              <a href={project.links.website} className="hover:text-text-primary">
+                Web
+              </a>
+            ) : null}
           </div>
         </div>
         <p className="text-xs text-text-muted">

@@ -16,7 +16,7 @@ Dark UI, forge green `#65E65F`, Inter. Stand-in Atmosphere art until ACCC assets
 
 ## Navigation
 
-Collection · Market · Mint. Portfolio via wallet menu. Mobile: Collection · Market · Mint · Me.
+Collection · Market · Mint · Tools. Plan and Portfolio via header / wallet. Mobile: Collection · Mint · Tools · Me.
 
 ## Critical UX
 
@@ -28,4 +28,4 @@ Use **Estimated value**.
 
 ## Routes
 
-`/` `/collection` `/market` `/mint` `/nft/:chain/:contract/:tokenId` `/portfolio` `/held?id=`
+`/` `/collection` `/market` `/mint` `/tools` `/admin` `/plan` `/nft/:chain/:contract/:tokenId` `/portfolio` `/account?tokenId=` `/held?id=`
