@@ -29,10 +29,25 @@
   {
     "id": "tokensmart",
     "name": "TokenSmart desktop",
-    "summary": "Desktop for watching wallets, tokens, and NFT Accounts. Member access.",
+    "summary": "Open TokenSmart in a new tab. Anyone can sign in; holding ACCC NFTs or $ACCC on this wallet unlocks extra programs and rooms there.",
     "group": "club",
-    "status": "soon",
-    "access": { "nft": 1 }
+    "status": "live",
+    "access": {},
+    "href": "https://desktop.tokensmart.co",
+    "perks": [
+      {
+        "label": "Member programs and club rooms",
+        "nft": 1
+      },
+      {
+        "label": "Additional TokenSmart programs",
+        "accc": 1000
+      },
+      {
+        "label": "Inner desk and genesis access",
+        "genesis": 1000
+      }
+    ]
   },
   {
     "id": "telegram",

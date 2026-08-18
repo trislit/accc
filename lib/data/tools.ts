@@ -10,6 +10,13 @@ export type ToolAccess = {
   genesis?: number;
 };
 
+export type ToolPerk = {
+  label: string;
+  nft?: number;
+  accc?: number;
+  genesis?: number;
+};
+
 export type ClubTool = {
   id: string;
   name: string;
@@ -18,6 +25,7 @@ export type ClubTool = {
   status: ToolStatus;
   access: ToolAccess;
   href?: string;
+  perks?: ToolPerk[];
 };
 
 export const TOOL_GROUPS: { id: ToolGroup; label: string }[] = [
@@ -26,7 +34,7 @@ export const TOOL_GROUPS: { id: ToolGroup; label: string }[] = [
   { id: "dev", label: "Dev" },
 ];
 
-export const TOOLS_STORAGE_KEY = "accc.tools.published.v1";
+export const TOOLS_STORAGE_KEY = "accc.tools.published.v3";
 
 const LINK_ENV: Record<string, string | undefined> = {
   telegram: process.env.NEXT_PUBLIC_TELEGRAM,
@@ -47,7 +55,35 @@ function asTool(value: unknown): ClubTool | undefined {
     genesis: positive(row.access?.genesis),
   };
   const href = typeof row.href === "string" && row.href.trim() ? row.href.trim() : undefined;
-  return { id: String(row.id), name: String(row.name), summary: String(row.summary), group, status, access, href };
+  const perks = asPerks(row.perks);
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    summary: String(row.summary),
+    group,
+    status,
+    access,
+    href,
+    perks,
+  };
+}
+
+function asPerks(value: unknown): ToolPerk[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const perks = value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const record = item as Record<string, unknown>;
+    if (typeof record.label !== "string" || !record.label.trim()) return [];
+    return [
+      {
+        label: record.label.trim(),
+        nft: positive(record.nft),
+        accc: positive(record.accc),
+        genesis: positive(record.genesis),
+      },
+    ];
+  });
+  return perks.length ? perks : undefined;
 }
 
 function positive(value: unknown) {
@@ -58,7 +94,7 @@ function positive(value: unknown) {
 function hydrate(tool: ClubTool): ClubTool {
   const fromEnv = LINK_ENV[tool.id]?.trim();
   if (!fromEnv) return tool;
-  return { ...tool, status: "live", href: fromEnv };
+  return { ...tool, status: "live", href: fromEnv, perks: tool.perks };
 }
 
 export function parseTools(raw: string): ClubTool[] | undefined {

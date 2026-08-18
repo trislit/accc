@@ -70,7 +70,8 @@ export const project = {
     x: process.env.NEXT_PUBLIC_X ?? "",
     discord: process.env.NEXT_PUBLIC_DISCORD ?? "",
     telegram: process.env.NEXT_PUBLIC_TELEGRAM ?? "",
-    tokensmart: process.env.NEXT_PUBLIC_TOKENSMART ?? "",
+    tokensmart:
+      process.env.NEXT_PUBLIC_TOKENSMART || "https://desktop.tokensmart.co",
   },
   live: liveContracts,
 };

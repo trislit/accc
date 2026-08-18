@@ -212,6 +212,7 @@ function ToolEditor({
       status,
       access,
       href: href.trim() || undefined,
+      perks: initial.perks,
     });
   }
 
@@ -258,7 +259,7 @@ function ToolEditor({
           <input
             value={href}
             onChange={(event) => setHref(event.target.value)}
-            placeholder="https://t.me/… or /portfolio/"
+            placeholder="https://desktop.tokensmart.co or /portfolio/"
             className={inputClass}
           />
         </Field>

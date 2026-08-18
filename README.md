@@ -65,7 +65,7 @@ Copy `.env.example` to `.env.local` for local overrides. Cloudflare Git builds u
 | `NEXT_PUBLIC_ADMINS` | Comma-separated wallets that can open `/admin` |
 | `NEXT_PUBLIC_TELEGRAM` | Member Telegram URL (makes the Telegram tool live) |
 | `NEXT_PUBLIC_DISCORD` | Member Discord URL |
-| `NEXT_PUBLIC_TOKENSMART` | TokenSmart desktop URL |
+| `NEXT_PUBLIC_TOKENSMART` | TokenSmart desktop URL (defaults to `https://desktop.tokensmart.co`) |
 
 Buy/list stay mocked. Mint, claim, harvest, deposit, and withdraw are live when NFT/token/implementation addresses are set.
 

@@ -11,6 +11,7 @@ import { useClubAccess } from "@/lib/data/access";
 import {
   TOOL_GROUPS,
   accessLabel,
+  accessMet,
   isExternalHref,
   type ClubTool,
 } from "@/lib/data/tools";
@@ -43,9 +44,10 @@ export function ToolsView() {
           ) : null}
         </div>
         <p className="max-w-2xl text-sm text-text-secondary">
-          Access opens as we ship. Some tools need an ACCC NFT, some need{" "}
-          {token} anywhere you hold it, and some need original genesis {token}{" "}
-          still sitting in the NFT Account.
+          TokenSmart desktop is live and opens in a new tab. Holding an ACCC NFT
+          or {token} on this wallet unlocks extra programs there. Other club
+          tools need an NFT, {token} anywhere you hold it, or original genesis{" "}
+          {token} still sitting in the NFT Account.
         </p>
       </header>
 
@@ -98,15 +100,21 @@ export function ToolsView() {
             <h2 className="text-lg font-semibold">{group.label}</h2>
             <div className="grid gap-4 md:grid-cols-2">
               {rows.map((tool) => (
-                <ToolCard
+                <div
                   key={tool.id}
-                  tool={tool}
-                  open={access.unlocked(tool.access)}
-                  connected={isConnected}
-                  loading={access.isLoading}
-                  nftCount={access.nftCount}
-                  onConnect={() => setConnectOpen(true)}
-                />
+                  className={tool.perks?.length ? "md:col-span-2" : undefined}
+                >
+                  <ToolCard
+                    tool={tool}
+                    open={access.unlocked(tool.access)}
+                    connected={isConnected}
+                    loading={access.isLoading}
+                    nftCount={access.nftCount}
+                    totalAccc={access.totalAccc}
+                    genesisHeld={access.genesisHeld}
+                    onConnect={() => setConnectOpen(true)}
+                  />
+                </div>
               ))}
             </div>
           </section>
@@ -124,6 +132,8 @@ function ToolCard({
   connected,
   loading,
   nftCount,
+  totalAccc,
+  genesisHeld,
   onConnect,
 }: {
   tool: ClubTool;
@@ -131,19 +141,24 @@ function ToolCard({
   connected: boolean;
   loading: boolean;
   nftCount: number;
+  totalAccc: number;
+  genesisHeld: number;
   onConnect: () => void;
 }) {
   const requirement = accessLabel(tool.access);
   const liveLink = open && tool.status === "live" && tool.href;
+  const external = Boolean(tool.href && isExternalHref(tool.href));
+  const stats = { nftCount, totalAccc, genesisHeld };
   const inner = (
     <>
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-base font-semibold">{tool.name}</h2>
         <div className="flex shrink-0 flex-wrap justify-end gap-1">
+          {external ? <Badge tone="info">External</Badge> : null}
           <Badge tone={tool.status === "live" ? "green" : "muted"}>
             {tool.status === "live" ? "Live" : "Soon"}
           </Badge>
-          {loading ? null : (
+          {loading || tool.perks?.length ? null : (
             <Badge tone={open ? "green" : "warning"}>
               {open ? "Unlocked" : "Locked"}
             </Badge>
@@ -151,7 +166,37 @@ function ToolCard({
         </div>
       </div>
       <p className="mt-2 text-sm text-text-secondary">{tool.summary}</p>
-      <p className="mt-4 text-xs text-text-muted">{requirement}</p>
+      {tool.perks?.length ? (
+        <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+          {tool.perks.map((perk) => {
+            const met = connected && accessMet(perk, stats);
+            return (
+              <li
+                key={perk.label}
+                className="rounded-md border border-border-subtle bg-bg px-3 py-3"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                  {loading
+                    ? "Checking"
+                    : met
+                      ? "Unlocked there"
+                      : "On TokenSmart"}
+                </p>
+                <p className="mt-1 text-sm text-text-primary">{perk.label}</p>
+                <p className="mt-2 text-xs text-text-muted">
+                  {accessLabel({
+                    nft: perk.nft,
+                    accc: perk.accc,
+                    genesis: perk.genesis,
+                  })}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="mt-4 text-xs text-text-muted">{requirement}</p>
+      )}
       {!open && !loading ? (
         <div className="mt-4">
           {!connected ? (
@@ -173,7 +218,9 @@ function ToolCard({
         </p>
       ) : null}
       {liveLink ? (
-        <p className="mt-4 text-xs text-forge-green">Open →</p>
+        <p className="mt-4 text-xs text-forge-green">
+          {external ? "Open in a new tab ↗" : "Open →"}
+        </p>
       ) : null}
     </>
   );
@@ -182,7 +229,7 @@ function ToolCard({
     "block rounded-lg border border-border bg-surface-1 p-5 hover:border-[#3a4440]";
 
   if (liveLink && tool.href) {
-    if (isExternalHref(tool.href)) {
+    if (external) {
       return (
         <a
           href={tool.href}

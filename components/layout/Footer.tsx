@@ -27,18 +27,44 @@ export function Footer() {
           </div>
           <div className="flex items-center gap-4 text-text-secondary">
             {project.links.x ? (
-              <a href={project.links.x} className="hover:text-text-primary" aria-label="X">
+              <a
+                href={project.links.x}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-text-primary"
+                aria-label="X"
+              >
                 𝕏
               </a>
             ) : null}
             {project.links.discord ? (
-              <a href={project.links.discord} className="hover:text-text-primary">
+              <a
+                href={project.links.discord}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-text-primary"
+              >
                 Discord
               </a>
             ) : null}
             {project.links.telegram ? (
-              <a href={project.links.telegram} className="hover:text-text-primary">
+              <a
+                href={project.links.telegram}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-text-primary"
+              >
                 Telegram
+              </a>
+            ) : null}
+            {project.links.tokensmart ? (
+              <a
+                href={project.links.tokensmart}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-text-primary"
+              >
+                TokenSmart
               </a>
             ) : null}
             {project.links.website ? (

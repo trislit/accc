@@ -4,6 +4,9 @@
 - [x] Community + desktop + upcoming dev tools in the catalog
 - [x] Tools page grouped; external links open in a new tab
 
+- [x] TokenSmart desktop live at https://desktop.tokensmart.co (external, new tab)
+- [x] Tools card shows NFT / $ACCC / genesis perks unlocked on TokenSmart
+
 ## Review
 
 Yes to an admin link board. No to a general CMS.
@@ -12,8 +15,11 @@ This site is a static export, so an admin change is real for everyone only after
 
 Default admin: `0x3872ff66dF4b9570F4e58FB1234a717dFe1334a9` (override with `NEXT_PUBLIC_ADMINS`).
 
+https:// URLs on a live tool open in a new tab (`isExternalHref`). TokenSmart is baked as live with no club-site gate so anyone can reach the desktop; the card explains that ACCC NFTs, $ACCC total, and genesis held in an NFT Account unlock extra programs there.
+
 ## How to verify
 
 1. Connect the admin wallet → wallet menu → Admin
 2. Add Telegram / Discord / TokenSmart URLs, set NFT or genesis gates, Publish on this device
-3. Open `/tools/` and confirm gates; Download JSON and put it in `lib/data/tools-catalog.json` to ship
+3. Open `/tools/` — TokenSmart desktop should open `https://desktop.tokensmart.co` in a new tab and show the three unlock rows
+4. Download JSON and put it in `lib/data/tools-catalog.json` to ship other links
