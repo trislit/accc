@@ -8,6 +8,7 @@ import {
   acccPublicClient,
 } from "../chain";
 import { acccArcadeAbi, acccDistributorAbi, acccNftAbi, acccTokenAbi } from "../contracts";
+import { DEFAULT_GENESIS_GRANT, isSpecialGrant } from "../grant";
 import {
   LIVE_ARCADE,
   LIVE_DISTRIBUTOR,
@@ -112,7 +113,8 @@ export function useDistributorStatus(tokenId?: string) {
         acccPublicClient.readContract({
           address: LIVE_DISTRIBUTOR,
           abi: acccDistributorAbi,
-          functionName: "GENESIS_AMOUNT",
+          functionName: "grantOf",
+          args: [id],
         }),
       ]);
       return {
@@ -123,6 +125,7 @@ export function useDistributorStatus(tokenId?: string) {
         eligibleFormatted: Number(formatUnits(eligible, 18)),
         pendingFormatted: Number(formatUnits(pending, 18)),
         genesisFormatted: Number(formatUnits(genesis, 18)),
+        special: isSpecialGrant(Number(formatUnits(genesis, 18))),
       };
     },
   });
@@ -135,8 +138,40 @@ export function useDistributorStatus(tokenId?: string) {
     eligibleFormatted: query.data?.eligibleFormatted,
     pendingFormatted: query.data?.pendingFormatted,
     genesisFormatted: query.data?.genesisFormatted,
+    special: query.data?.special ?? false,
     isLoading: query.isLoading || query.isFetching,
     error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
+  };
+}
+
+export function useGrantOf(tokenId?: string) {
+  const query = useQuery({
+    queryKey: ["accc-grant", ROBINHOOD_TESTNET_ID, LIVE_DISTRIBUTOR, tokenId],
+    enabled: Boolean(
+      liveContracts &&
+        LIVE_DISTRIBUTOR &&
+        LIVE_DISTRIBUTOR !== "0x0000000000000000000000000000000000000000" &&
+        tokenId,
+    ),
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!tokenId) throw new Error("No token");
+      const amount = await acccPublicClient.readContract({
+        address: LIVE_DISTRIBUTOR,
+        abi: acccDistributorAbi,
+        functionName: "grantOf",
+        args: [BigInt(tokenId)],
+      });
+      const formatted = Number(formatUnits(amount, 18));
+      return { formatted, special: isSpecialGrant(formatted) };
+    },
+  });
+
+  return {
+    formatted: query.data?.formatted ?? DEFAULT_GENESIS_GRANT,
+    special: query.data?.special ?? false,
+    isLoading: query.isLoading || query.isFetching,
     refetch: query.refetch,
   };
 }
@@ -201,6 +236,7 @@ export function useAcccMintStats(owner?: Address) {
     minted: query.data?.minted,
     nextId: query.data?.nextId,
     owned: query.data?.owned ?? 0,
+    paused: query.data?.paused ?? false,
     isLoading: query.isLoading || query.isFetching,
     error: query.error instanceof Error ? query.error.message : undefined,
     refetch: query.refetch,

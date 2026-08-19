@@ -11,11 +11,13 @@ import {
   useOnchainTransaction,
 } from "@/components/tx/TransactionStatus";
 import { Badge } from "@/components/ui/Badge";
+import { SeatPitch } from "@/components/pitch/SeatPitch";
 import { Button } from "@/components/ui/Button";
 import { ConnectModal } from "@/components/wallet/WalletControls";
 import { acccNftAbi } from "@/lib/contracts";
 import { activeChain, explorerAddressUrl } from "@/lib/chain";
-import { useAcccMintStats } from "@/lib/data/onchain";
+import { useAcccMintStats, useGrantOf } from "@/lib/data/onchain";
+import { formatTokenAmount } from "@/lib/format";
 import { LIVE_NFT, project } from "@/lib/project";
 import { accountPath, tokenIdFromMintReceipt } from "@/lib/tba";
 import { wagmiConfig } from "@/lib/wagmi";
@@ -41,6 +43,9 @@ export function DropView({ drop }: { drop: Drop }) {
   const [liveTokenId, setLiveTokenId] = useState<string>();
   const onchainMint = drop.status === "live";
   const stats = useAcccMintStats();
+  const nextTokenId =
+    stats.nextId === undefined ? undefined : String(stats.nextId + 1);
+  const nextGrant = useGrantOf(onchainMint ? nextTokenId : undefined);
   const minted = onchainMint ? stats.minted : drop.minted;
   const mintedLabel =
     minted === undefined && stats.isLoading ? "—" : (minted ?? 0).toLocaleString();
@@ -49,13 +54,17 @@ export function DropView({ drop }: { drop: Drop }) {
     () =>
       [
         `1 × ${drop.includes.nftLabel.replace(/^1 /, "")}`,
-        drop.includes.nftAccount ? "1 NFT Account" : "",
-        "Onchain ERC-6551 account created at mint",
+        drop.includes.nftAccount ? "An account this NFT owns" : "",
+        "Tokens, NFTs, and locked perks that follow this seat",
+        nextGrant.special
+          ? `${formatTokenAmount(nextGrant.formatted)} ${project.tokenSymbol} genesis grant (special)`
+          : "Genesis grant into the NFT Account (usually 1,000 $ACCC)",
       ].filter(Boolean),
-    [drop],
+    [drop, nextGrant.formatted, nextGrant.special],
   );
 
   function onMintClick() {
+    if (stats.paused) return;
     if (!isConnected) {
       setConnectOpen(true);
       return;
@@ -78,6 +87,7 @@ export function DropView({ drop }: { drop: Drop }) {
       void stats.refetch();
       void queryClient.invalidateQueries({ queryKey: ["accc-collection"] });
       void queryClient.invalidateQueries({ queryKey: ["accc-owned"] });
+      void queryClient.invalidateQueries({ queryKey: ["accc-grant"] });
     });
   }
 
@@ -103,8 +113,8 @@ export function DropView({ drop }: { drop: Drop }) {
         </div>
         {onchainMint ? (
           <p className="mt-2 text-sm text-text-secondary">
-            Testnet mint against AcccNft. Each NFT deploys an ERC-6551 account
-            you can deposit tokens into. The contract has no supply cap.
+            Free testnet mint. You get a seat: an NFT with its own account.
+            Tokens, other NFTs, and perks you buy stay on that seat.
           </p>
         ) : null}
         <ProjectVideo
@@ -112,6 +122,9 @@ export function DropView({ drop }: { drop: Drop }) {
           className="mt-6 aspect-[16/10] w-full"
           rounded="rounded-lg"
         />
+        <div className="mt-6">
+          <SeatPitch variant="compact" />
+        </div>
       </div>
 
       <aside className="h-fit space-y-5 rounded-lg border border-border bg-surface-1 p-5">
@@ -119,7 +132,14 @@ export function DropView({ drop }: { drop: Drop }) {
           <Meta label="Mint price" value="Free" />
           <Meta label="Supply" value="Open" />
           <Meta label="Minted" value={mintedLabel} />
-          <Meta label="Network" value="RH testnet" />
+          <Meta
+            label="Next grant"
+            value={
+              nextGrant.special
+                ? `${formatTokenAmount(nextGrant.formatted)} special`
+                : `${formatTokenAmount(nextGrant.formatted)} $ACCC`
+            }
+          />
         </div>
         {stats.error ? (
           <p className="text-sm text-error">{stats.error}</p>
@@ -132,11 +152,24 @@ export function DropView({ drop }: { drop: Drop }) {
         ) : null}
 
         {drop.status === "live" ? (
-          <>
+          stats.paused ? (
+            <p className="text-sm text-warning">
+              Public mint is paused while core seats are assigned. Open mint
+              from Admin when leadership IDs are minted.
+            </p>
+          ) : (
+            <>
+            {nextGrant.special ? (
+              <Badge tone="warning">Next mint is a special grant</Badge>
+            ) : null}
             <p className="tabular text-sm text-text-secondary">0 ETH</p>
             <Button className="w-full" onClick={onMintClick}>
               {isConnected ? "Mint on testnet" : "Connect to mint"}
             </Button>
+            </>
+          )
+        ) : null}
+        {drop.status === "live" ? (
             <a
               href={explorerAddressUrl(LIVE_NFT)}
               target="_blank"
@@ -145,7 +178,6 @@ export function DropView({ drop }: { drop: Drop }) {
             >
               {LIVE_NFT}
             </a>
-          </>
         ) : null}
 
         {drop.status === "completed" ? (
@@ -176,7 +208,7 @@ export function DropView({ drop }: { drop: Drop }) {
       <TransactionModal
         tx={liveTx}
         completeTitle="Mint complete"
-        completeBody="Your NFT Account is onchain. Deposit test $ACCC or ETH into it."
+        completeBody="Your seat is onchain. Tokens, NFTs, and skins you buy stay with this NFT."
         completeHref={liveTokenId ? accountPath(liveTokenId) : "/portfolio/"}
         completeLabel="View NFT Account"
       />

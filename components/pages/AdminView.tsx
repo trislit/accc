@@ -3,6 +3,8 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import { CoreSeats } from "@/components/admin/CoreSeats";
+import { SeedGrants } from "@/components/admin/SeedGrants";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -79,11 +81,11 @@ export function AdminView() {
     <div className="space-y-8">
       <header className="space-y-3">
         <p className="text-xs font-semibold tracking-wide text-text-muted">ADMIN</p>
-        <h1 className="text-[32px] font-semibold leading-10">Tool links</h1>
+        <h1 className="text-[32px] font-semibold leading-10">Admin</h1>
         <p className="max-w-2xl text-sm text-text-secondary">
-          Add Telegram, Discord, TokenSmart, and upcoming dev tools. Set who can
-          see each link: open, NFT, $ACCC total, or genesis still held in the
-          NFT Account. Publish applies on this device; download JSON and replace{" "}
+          Assign core seats to leadership wallets, seed public specials, then
+          manage tool links. Publish tools on this device; download JSON and
+          replace{" "}
           <span className="font-mono text-text-primary">lib/data/tools-catalog.json</span>{" "}
           to ship it for everyone.
         </p>
@@ -106,6 +108,9 @@ export function AdminView() {
       </div>
 
       {message ? <p className="text-sm text-forge-green">{message}</p> : null}
+
+      <CoreSeats />
+      <SeedGrants />
 
       <div className="overflow-hidden rounded-lg border border-border">
         <div className="grid grid-cols-[1fr_7rem_1fr_auto] gap-3 px-4 py-3 text-xs text-text-muted">

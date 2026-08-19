@@ -5,7 +5,7 @@ import {Script, console} from "forge-std/Script.sol";
 import {AcccDistributor} from "../src/AcccDistributor.sol";
 
 contract DeployDistributor is Script {
-    address constant NFT = 0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5;
+    address constant NFT = 0xB740c4bef629d15A4B3058368E6CBC807dbC0357;
 
     function run() external {
         uint256 deployer = vm.envUint("PRIVATE_KEY");

@@ -13,7 +13,7 @@ import {
   useOnchainTransaction,
 } from "@/components/tx/TransactionStatus";
 import { AddressDisplay } from "@/components/ui/AddressDisplay";
-import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
+import { AccountBadge, Badge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Tabs";
 import { artIdForSkin } from "@/lib/arcade";
@@ -140,10 +140,10 @@ function AccountInner() {
 
   function onClaim() {
     onDistributorWrite(
-      `Claim 1,000 ${tokenLabel()}`,
+      `Claim ${formatTokenAmount(genesis)} ${tokenLabel()}`,
       "claimGenesis",
       "Claim complete",
-      `1,000 ${tokenLabel()} was minted into this NFT Account. Yield accrues on that grant while it stays here.`,
+      `${formatTokenAmount(genesis)} ${tokenLabel()} was minted into this NFT Account. Yield accrues on that grant while it stays here.`,
     );
   }
 
@@ -217,7 +217,8 @@ function AccountInner() {
             {project.nftPrefix} #{tokenId}
           </h1>
           <p className="mt-2 text-sm text-text-muted">
-            Live ERC-6551 account on Robinhood Chain testnet.
+            This NFT owns the account. Tokens, other NFTs, and locked perks
+            move with the seat.
           </p>
           <div className="mt-4 space-y-2 text-sm">
             <p className="text-text-muted">Owned by</p>
@@ -235,7 +236,10 @@ function AccountInner() {
           </div>
           {dist.claimed ? (
             <div className="mt-5 rounded-lg border border-border bg-surface-1 p-4 text-sm">
-              <p className="text-xs text-text-muted">Earning principal</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-text-muted">Earning principal</p>
+                {dist.special ? <Badge tone="warning">Special grant</Badge> : null}
+              </div>
               <p className="mt-1 tabular font-medium">
                 {formatTokenAmount(eligible)} / {formatTokenAmount(genesis)}{" "}
                 {tokenLabel()}
@@ -253,7 +257,7 @@ function AccountInner() {
           <div className="mt-6 flex flex-wrap gap-2">
             {isOwner && dist.claimed === false ? (
               <Button onClick={onClaim} disabled={!tbaQuery.address}>
-                Claim 1,000 {tokenLabel()}
+                Claim {formatTokenAmount(genesis)} {tokenLabel()}
               </Button>
             ) : null}
             {isOwner && dist.claimed ? (
@@ -281,8 +285,9 @@ function AccountInner() {
           </div>
           {isOwner && dist.claimed === false ? (
             <p className="mt-3 text-sm text-text-secondary">
-              This NFT can claim 1,000 {tokenLabel()} once. Yield then accrues
-              only while that original grant stays in the NFT Account.
+              This NFT can claim {formatTokenAmount(genesis)} {tokenLabel()} once
+              {dist.special ? " — a marked seat" : ""}. Yield then accrues only
+              while that original grant stays in the NFT Account.
             </p>
           ) : null}
           {account ? (

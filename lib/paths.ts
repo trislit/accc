@@ -22,6 +22,10 @@ export function planPath() {
   return "/plan/";
 }
 
+export function seatPath() {
+  return "/seat/";
+}
+
 export function toolsPath() {
   return "/tools/";
 }

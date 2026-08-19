@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ProjectVideo } from "@/components/art/ProjectVideo";
 import { NFTCard } from "@/components/cards/NFTCard";
+import { SeatPitch } from "@/components/pitch/SeatPitch";
 import { Button } from "@/components/ui/Button";
 import { useLiveCollection } from "@/lib/data/liveCollection";
 import { formatTokenAmount } from "@/lib/format";
@@ -73,21 +74,7 @@ export default function HomePage() {
         />
       </section>
 
-      <section className="rounded-lg border border-border bg-surface-1 p-6 md:p-8">
-        <p className="text-xs font-semibold tracking-wide text-text-muted">
-          HOW THIS COLLECTION WORKS
-        </p>
-        <div className="mt-6 font-mono text-sm leading-7 text-text-secondary">
-          <p className="text-text-primary">NFT</p>
-          <p className="pl-4">│</p>
-          <p className="pl-4">
-            ├── owns → <span className="text-text-primary">NFT Account</span>
-          </p>
-          <p className="pl-8">│</p>
-          <p className="pl-8">├── {tokenLabel()}</p>
-          <p className="pl-8">└── ETH</p>
-        </div>
-      </section>
+      <SeatPitch />
 
       <section>
         <div className="mb-5 flex items-center justify-between">

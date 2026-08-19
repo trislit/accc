@@ -1,20 +1,16 @@
-# ACCC — Arcade wallpapers
+# ACCC — Core seats for leadership
 
-- [x] AcccArcade.sol + tests (inner circle, 10 $ACCC skins, no principal ratchet)
-- [x] Redeployed on Robinhood testnet `0xE3D58B7BA09d1F4f5007C394EEe2694f54f91BcE`
-- [x] Wired `LIVE_ARCADE` / `NEXT_PUBLIC_ARCADE`
-- [x] `/arcade/?tokenId=` snake + memory (free) and wallpaper shop
-- [x] Collection + account art follows equipped wallpaper
-- [x] Plan page Play note: games free, spend harvest on skins
-
-## Review
-
-Games are free client-side (snake, memory). The sink is wallpaper: 10 `$ACCC` from the owner wallet, inner-circle only (`eligiblePrincipal > 0`). Skin 0 is free. Equipped wallpaper skins the board and the NFT art.
+- [x] AcccNft: owner, pause, reserve IDs, mintTo(wallet, id), core flag; public mint skips those IDs
+- [x] seedNextMints skips reserved/minted IDs
+- [x] Tests for pause, reserve skip, mintTo
+- [x] Admin: pause, reserve, mint core to wallet, set grant
+- [x] Mint page respects pause; cards show Core
+- [x] Redeployed NFT `0xB740c4bef629d15A4B3058368E6CBC807dbC0357` + distributor + arcade. Public mint starts paused.
 
 ## How to verify
 
-1. Own an ACCC NFT, claim genesis, keep it in the NFT Account
-2. `/arcade/?tokenId=` — play snake / memory without a tx
-3. Harvest surplus (or use wallet `$ACCC`), Approve, buy a wallpaper
-4. Collection + account atmosphere match the equipped skin
-5. `/tools/` Arcade is live and gated on NFT + genesis held
+1. `/mint/` shows public mint paused
+2. `/admin/` Core seats: set grant on #1, mint to a leadership wallet
+3. Collection card shows Core
+4. Open public mint, next public ID skips #1
+5. Seed next mints for public specials without colliding with reserved cores

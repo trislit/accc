@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SeatPitch } from "@/components/pitch/SeatPitch";
 import { Button } from "@/components/ui/Button";
 import { tokenLabel } from "@/lib/project";
 
 const sections = [
+  { id: "seat", label: "The seat" },
   { id: "thesis", label: "Thesis" },
   { id: "join", label: "How you join" },
   { id: "accrual", label: "Accrual" },
@@ -55,6 +57,10 @@ export function PlanView() {
         </div>
       </nav>
 
+      <section id="seat" className="scroll-mt-36 space-y-4">
+        <SeatPitch />
+      </section>
+
       <section id="thesis" className="scroll-mt-36 space-y-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <Stat value="NFT Account" label="Membership is an onchain account" />
@@ -90,7 +96,8 @@ export function PlanView() {
       <section id="join" className="scroll-mt-36 space-y-4">
         <h2 className="text-2xl font-semibold">How you get involved</h2>
         <p className="text-sm text-text-secondary">
-          One loop. The NFT is the seat. The token in that seat is the stake.
+          One loop. The NFT is the seat. What that seat holds and unlocks
+          travels with it.
         </p>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full min-w-[36rem] text-left text-sm">
@@ -104,12 +111,12 @@ export function PlanView() {
             <tbody className="divide-y divide-border-subtle">
               <Row
                 step="1. Buy or mint"
-                action="Mint genesis or buy an ACCC NFT."
+                action="Mint genesis or buy an ACCC NFT. Core IDs are assigned to leadership first."
                 result="An ERC-6551 NFT Account you control."
               />
               <Row
                 step="2. Claim once"
-                action={`Claim 1,000 ${token} into that NFT Account.`}
+                action={`Claim genesis ${token} into that NFT Account. Most seats get 1,000; marked seats get more.`}
                 result="Original principal. One grant per NFT, forever."
               />
               <Row
@@ -142,6 +149,8 @@ export function PlanView() {
         <p className="text-sm leading-7 text-text-secondary">
           Most member tokens leak. People claim, dump, and still expect upside.
           ACCC only pays the original grant that is still sitting in the NFT.
+          A marked seat with a larger grant earns more — and loses more if it is
+          emptied.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           <Note title="Leave 1,000 in">
@@ -246,7 +255,7 @@ export function PlanView() {
             <tbody className="divide-y divide-border-subtle">
               <Row
                 step="Mint / buy ACCC NFT"
-                action={`Claim 1,000 ${token} into the NFT Account`}
+                action={`Claim genesis ${token} into the NFT Account`}
                 result="Creates earning principal"
               />
               <Row

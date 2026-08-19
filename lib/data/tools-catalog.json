@@ -2,7 +2,7 @@
   {
     "id": "accounts",
     "name": "NFT Accounts",
-    "summary": "Open the membership seat. Each NFT is an onchain account that can hold $ACCC.",
+    "summary": "Each NFT is a bag. Tokens, nested NFTs, and locked perks move with the seat.",
     "group": "club",
     "status": "live",
     "access": { "nft": 1 },
@@ -11,7 +11,7 @@
   {
     "id": "claim",
     "name": "Claim & harvest",
-    "summary": "Claim the 1,000 $ACCC genesis grant into the NFT Account, then harvest yield on what stays.",
+    "summary": "Claim the genesis $ACCC grant into the NFT Account (1,000 on most seats, more on marked ones), then harvest yield on what stays.",
     "group": "club",
     "status": "live",
     "access": { "nft": 1 },

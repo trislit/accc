@@ -70,6 +70,9 @@ export type CollectionNFT = {
   listed: boolean;
   traits: Trait[];
   arcadeWallpaper?: number;
+  genesisGrant?: number;
+  special?: boolean;
+  core?: boolean;
   market?: {
     listing?: Listing;
     bestOffer?: Offer;

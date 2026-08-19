@@ -33,7 +33,8 @@ export function NftAccountPanel({
     <section className="rounded-lg border border-border bg-surface-1 p-5">
       <h3 className="text-base font-semibold">NFT Account</h3>
       <p className="mt-1 text-sm text-text-secondary">
-        This NFT controls its own onchain account.
+        This NFT owns this account. Tokens, nested NFTs, and locked perks move
+        with the NFT.
       </p>
       <p className="mt-1 text-xs text-text-muted">Powered by ERC-6551</p>
       <div className="mt-4">
@@ -122,11 +123,6 @@ export function NftAccountPanel({
             )
           ) : null}
         </div>
-      ) : null}
-      {account.assets.some((asset) => asset.kind === "nft") ? (
-        <p className="mt-3 text-xs text-text-muted">
-          Contained NFTs remain assets of this NFT Account, not of the owner wallet.
-        </p>
       ) : null}
       {live && isOwner ? (
         <>

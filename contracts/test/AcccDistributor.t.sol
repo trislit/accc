@@ -20,6 +20,7 @@ contract AcccDistributorTest is Test {
         registry = new ERC6551Registry();
         implementation = new ERC6551Account();
         nft = new AcccNft(address(registry), address(implementation));
+        nft.setPaused(false);
         distributor = new AcccDistributor(address(nft));
         token = distributor.token();
     }
@@ -114,5 +115,52 @@ contract AcccDistributorTest is Test {
     function testUnmintedGenesisReverts() public {
         vm.expectRevert();
         distributor.claimGenesis(1);
+    }
+
+    function testReservedGrantMintsMoreAndEarnsMore() public {
+        distributor.seedNextMints(5_000 ether, 1);
+        (uint256 specialId, address specialTba) = nft.mint();
+        (uint256 baseId,) = nft.mint();
+
+        assertTrue(distributor.isSpecial(specialId));
+        assertFalse(distributor.isSpecial(baseId));
+        assertEq(distributor.grantOf(specialId), 5_000 ether);
+        assertEq(distributor.grantOf(baseId), 1_000 ether);
+
+        distributor.claimGenesis(specialId);
+        distributor.claimGenesis(baseId);
+        assertEq(token.balanceOf(specialTba), 5_000 ether);
+        assertEq(distributor.eligiblePrincipal(specialId), 5_000 ether);
+
+        vm.warp(block.timestamp + 365 days);
+        assertEq(distributor.pendingYield(specialId), 500 ether);
+        assertEq(distributor.pendingYield(baseId), 100 ether);
+    }
+
+    function testSetGrantOnExistingUnclaimed() public {
+        (uint256 tokenId, address tba) = nft.mint();
+        distributor.setGrant(tokenId, 2_000 ether);
+        distributor.claimGenesis(tokenId);
+        assertEq(token.balanceOf(tba), 2_000 ether);
+    }
+
+    function testCannotChangeGrantAfterClaim() public {
+        (uint256 tokenId,) = nft.mint();
+        distributor.claimGenesis(tokenId);
+        vm.expectRevert("claimed");
+        distributor.setGrant(tokenId, 5_000 ether);
+    }
+
+    function testSeedNextMintsSkipsReservedCore() public {
+        nft.reserve(1, true);
+        distributor.seedNextMints(5_000 ether, 1);
+        assertEq(distributor.grantOf(1), 1_000 ether);
+        assertEq(distributor.grantOf(2), 5_000 ether);
+    }
+
+    function testOnlyOwnerSeeds() public {
+        vm.prank(address(1));
+        vm.expectRevert("not owner");
+        distributor.seedNextMints(5_000 ether, 1);
     }
 }

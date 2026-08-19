@@ -5,8 +5,8 @@ import {Script, console} from "forge-std/Script.sol";
 import {AcccArcade} from "../src/AcccArcade.sol";
 
 contract DeployArcade is Script {
-    address constant NFT = 0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5;
-    address constant DISTRIBUTOR = 0x56deD1a8d70893113Cff4289e204B142d4ce5eDA;
+    address constant NFT = 0xB740c4bef629d15A4B3058368E6CBC807dbC0357;
+    address constant DISTRIBUTOR = 0x3448096b67f3459EE2458c3618Db57a47ca602cD;
 
     function run() external {
         uint256 deployer = vm.envUint("PRIVATE_KEY");

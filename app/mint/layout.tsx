@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { PlanView } from "@/components/pages/PlanView";
+import type { ReactNode } from "react";
 import { pitch } from "@/lib/pitch";
 import { project } from "@/lib/project";
 
 export const metadata: Metadata = {
-  title: `Plan · ${project.name}`,
+  title: `Mint · ${project.name}`,
   description: pitch.share,
 };
 
-export default function PlanPage() {
-  return <PlanView />;
+export default function MintLayout({ children }: { children: ReactNode }) {
+  return children;
 }

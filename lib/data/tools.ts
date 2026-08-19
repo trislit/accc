@@ -34,7 +34,7 @@ export const TOOL_GROUPS: { id: ToolGroup; label: string }[] = [
   { id: "dev", label: "Dev" },
 ];
 
-export const TOOLS_STORAGE_KEY = "accc.tools.published.v5";
+export const TOOLS_STORAGE_KEY = "accc.tools.published.v7";
 
 const LINK_ENV: Record<string, string | undefined> = {
   telegram: process.env.NEXT_PUBLIC_TELEGRAM,

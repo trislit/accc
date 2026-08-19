@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
 import { Providers } from "@/components/wallet/Providers";
+import { pitch } from "@/lib/pitch";
 import { project } from "@/lib/project";
 import "./globals.css";
 
@@ -12,7 +13,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: project.name,
-  description: project.tagline,
+  description: pitch.share,
 };
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Atmosphere } from "@/components/art/Atmosphere";
-import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
+import { AccountBadge, Badge, VerifiedBadge } from "@/components/ui/Badge";
 import { formatTokenAmount } from "@/lib/format";
 import { nftPath } from "@/lib/paths";
 import { tokenLabel } from "@/lib/project";
@@ -25,7 +25,8 @@ export function NFTCard({ nft, href }: { nft: CollectionNFT; href?: string }) {
         <div className="flex items-center gap-1.5 text-xs text-text-secondary">
           <span className="truncate">{nft.collectionName}</span>
           {nft.verified ? <VerifiedBadge /> : null}
-          {nft.nftAccount ? <AccountBadge /> : null}
+          {nft.core ? <Badge tone="info">Core</Badge> : null}
+          {nft.special ? <Badge tone="warning">Special grant</Badge> : null}
         </div>
         <p className="truncate text-sm font-medium">{nft.name}</p>
         <div>
@@ -37,6 +38,9 @@ export function NFTCard({ nft, href }: { nft: CollectionNFT; href?: string }) {
           <p className="text-xs text-text-muted">
             {nft.listed ? "Listed" : "Minted"}
             {nft.nftAccount ? " · NFT Account" : ""}
+            {nft.special && nft.genesisGrant
+              ? ` · ${formatTokenAmount(nft.genesisGrant)} grant`
+              : ""}
           </p>
         </div>
       </div>

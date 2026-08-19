@@ -2,7 +2,7 @@
 
 Anti-Cabal Cabal Club on Robinhood Chain.
 
-Mint a membership NFT. Each mint includes an NFT Account (ERC-6551) that can hold $ACCC. Secondary market is this collection only.
+Mint a membership NFT. Each mint includes an NFT Account that can hold $ACCC and other NFTs. Perks bought for that seat stay with it when it moves.
 
 Identity lives in [`lib/project.ts`](lib/project.ts).
 
@@ -19,6 +19,7 @@ This is **not** TwinForge. TwinForge stays the factory.
 - `/arcade?tokenId=` arcade (free games + $ACCC wallpaper skins)
 - `/portfolio` ACCC holdings
 - `/plan` public pitch and go-to-market
+- `/seat` one-page Hold / Spend / Move pitch (share this)
 - `/tools` gated club tools (NFT, $ACCC total, genesis still in the NFT Account)
 - `/admin` administrator link board (wallet allowlist)
 
@@ -80,15 +81,16 @@ After a deploy that includes the live addresses:
 1. Open the Cloudflare URL, go to **Mint**.
 2. Connect a wallet on **Robinhood Chain Testnet** (chain ID `46630`).
 3. That wallet needs testnet ETH from [the faucet](https://faucet.testnet.chain.robinhood.com/) (the deployer key is only for contracts; mint from your own wallet).
-4. Mint → **Open NFT Account** → **Claim 1,000 $ACCC** → Harvest / Withdraw.
+4. Mint → **Open NFT Account** → **Claim genesis $ACCC** → Harvest / Withdraw.
 
 To rebuild without a code change, set these as Cloudflare **build** environment variables and retry the deployment:
 
 ```
 NEXT_PUBLIC_CHAIN_ID=46630
-NEXT_PUBLIC_NFT=0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5
-NEXT_PUBLIC_TOKEN=0xc153e32f7f0dBe3131FECcC598a1EA57C64c5A99
-NEXT_PUBLIC_DISTRIBUTOR=0x56deD1a8d70893113Cff4289e204B142d4ce5eDA
+NEXT_PUBLIC_NFT=0xB740c4bef629d15A4B3058368E6CBC807dbC0357
+NEXT_PUBLIC_TOKEN=0x9e73FB99E42C520A305b570159a6f7DD2B227Ac3
+NEXT_PUBLIC_DISTRIBUTOR=0x3448096b67f3459EE2458c3618Db57a47ca602cD
+NEXT_PUBLIC_ARCADE=0xc5bA7541CFB9d4F4f6e131d95acC8f246b86F77b
 NEXT_PUBLIC_TBA_IMPLEMENTATION=0x8A0455E86536F57323866ed13c26febAb8ae3049
 NEXT_PUBLIC_TBA_REGISTRY=0x000000006551c19487814612e58FE06813775758
 ```

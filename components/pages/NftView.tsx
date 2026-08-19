@@ -88,13 +88,14 @@ export function NftView({ nft }: { nft: CollectionNFT }) {
             </div>
           )}
           {account ? (
+            <>
             <div className="mt-4 grid grid-cols-3 gap-3 rounded-lg border border-border bg-surface-1 p-4 text-sm">
               <div>
                 <p className="text-xs text-text-muted">NFT market value</p>
                 <p className="tabular font-medium">{formatUsd(marketUsd)}</p>
               </div>
               <div>
-                <p className="text-xs text-text-muted">Contained assets</p>
+                <p className="text-xs text-text-muted">In this seat</p>
                 <p className="tabular font-medium">{formatUsd(contained)}</p>
               </div>
               <div>
@@ -102,6 +103,11 @@ export function NftView({ nft }: { nft: CollectionNFT }) {
                 <p className="tabular font-semibold">{formatUsd(combined)}</p>
               </div>
             </div>
+            <p className="mt-2 text-xs text-text-muted">
+              Assets in the NFT Account and locked perks stay with this NFT if
+              it moves.
+            </p>
+            </>
           ) : null}
         </div>
       </div>

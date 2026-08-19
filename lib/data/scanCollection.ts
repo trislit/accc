@@ -1,8 +1,9 @@
 import { formatEther, formatUnits, parseAbiItem, zeroAddress } from "viem";
 import { arcadePath, artIdForSkin, skinById } from "../arcade";
 import { ROBINHOOD_TESTNET_ID, acccPublicClient } from "../chain";
-import { acccArcadeAbi, acccNftAbi, acccTokenAbi } from "../contracts";
-import { LIVE_ARCADE, LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "../project";
+import { acccArcadeAbi, acccDistributorAbi, acccNftAbi, acccTokenAbi } from "../contracts";
+import { isSpecialGrant } from "../grant";
+import { LIVE_ARCADE, LIVE_DISTRIBUTOR, LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "../project";
 import { accountPath } from "../tba";
 import type { ActivityItem, Address, CollectionNFT, TokenAsset } from "../types";
 
@@ -39,7 +40,7 @@ function ethAsset(balance: number): TokenAsset {
 }
 
 export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
-  const [owner, tba, arcade] = await Promise.all([
+  const [owner, tba, arcade, grantWei, isCore] = await Promise.all([
     acccPublicClient.readContract({
       address: LIVE_NFT,
       abi: acccNftAbi,
@@ -62,6 +63,24 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
           })
           .catch(() => 0)
       : Promise.resolve(0),
+    LIVE_DISTRIBUTOR
+      ? acccPublicClient
+          .readContract({
+            address: LIVE_DISTRIBUTOR,
+            abi: acccDistributorAbi,
+            functionName: "grantOf",
+            args: [tokenId],
+          })
+          .catch(() => BigInt(0))
+      : Promise.resolve(BigInt(0)),
+    acccPublicClient
+      .readContract({
+        address: LIVE_NFT,
+        abi: acccNftAbi,
+        functionName: "core",
+        args: [tokenId],
+      })
+      .catch(() => false),
   ]);
   const [acccWei, ethWei] = await Promise.all([
     acccPublicClient.readContract({
@@ -78,6 +97,7 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
   const assets: TokenAsset[] = [acccAsset(accc)];
   if (eth > 0) assets.unshift(ethAsset(eth));
   const wallpaper = Number(arcade);
+  const genesisGrant = Number(formatUnits(grantWei, 18));
 
   return {
     chainId: ROBINHOOD_TESTNET_ID,
@@ -93,6 +113,9 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
     listed: false,
     traits: [],
     arcadeWallpaper: wallpaper || undefined,
+    genesisGrant,
+    special: isSpecialGrant(genesisGrant),
+    core: Boolean(isCore),
     nftAccount: {
       address: tba,
       nft: { contract: LIVE_NFT, tokenId: id },
@@ -106,7 +129,7 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
 }
 
 export async function fetchAcccMintStats(owner?: Address) {
-  const [nextId, totalSupply, owned] = await Promise.all([
+  const [nextId, totalSupply, owned, paused] = await Promise.all([
     acccPublicClient.readContract({
       address: LIVE_NFT,
       abi: acccNftAbi,
@@ -125,11 +148,19 @@ export async function fetchAcccMintStats(owner?: Address) {
           args: [owner],
         })
       : Promise.resolve(undefined),
+    acccPublicClient
+      .readContract({
+        address: LIVE_NFT,
+        abi: acccNftAbi,
+        functionName: "mintPaused",
+      })
+      .catch(() => false),
   ]);
   return {
     nextId: Number(nextId),
     minted: Number(totalSupply),
     owned: owned === undefined ? 0 : Number(owned),
+    paused: Boolean(paused),
   };
 }
 

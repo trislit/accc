@@ -4,9 +4,9 @@ Dedicated NFT project on Robinhood Chain. Visual chrome matches TwinForge’s da
 
 ## Product
 
-Hierarchy: **ACCC → NFT → NFT Account → $ACCC / NFTs**
+Hierarchy: **ACCC → NFT (seat) → NFT Account → $ACCC / NFTs / locked perks**
 
-Every mint can include an NFT Account (ERC-6551). Claim `$ACCC` into that account, not the owner wallet.
+Every mint includes an NFT Account (ERC-6551). Tokens, nested NFTs, and locked perks stay with the NFT when it moves. Claim `$ACCC` into that account, not the owner wallet.
 
 Identity in `lib/project.ts`.
 
@@ -28,4 +28,4 @@ Use **Estimated value**.
 
 ## Routes
 
-`/` `/collection` `/market` `/mint` `/tools` `/admin` `/plan` `/nft/:chain/:contract/:tokenId` `/portfolio` `/account?tokenId=` `/held?id=`
+`/` `/collection` `/market` `/mint` `/tools` `/admin` `/plan` `/seat` `/nft/:chain/:contract/:tokenId` `/portfolio` `/account?tokenId=` `/held?id=`

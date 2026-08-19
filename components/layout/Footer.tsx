@@ -24,6 +24,9 @@ export function Footer() {
             <Link href="/plan/" className="hover:text-text-primary">
               Plan
             </Link>
+            <Link href="/seat/" className="hover:text-text-primary">
+              The seat
+            </Link>
           </div>
           <div className="flex items-center gap-4 text-text-secondary">
             {project.links.x ? (

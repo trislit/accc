@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Atmosphere } from "@/components/art/Atmosphere";
 import { ProjectVideo } from "@/components/art/ProjectVideo";
 import { NFTCard } from "@/components/cards/NFTCard";
+import { SeatPitch } from "@/components/pitch/SeatPitch";
 import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { Badge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -110,9 +111,14 @@ export function CollectionView() {
               <Row label="NFT Accounts" value="Enabled" />
             </dl>
             <p className="mt-4 max-w-xl text-sm text-text-secondary">
-              Every mint includes an NFT Account that can hold {tokenLabel()} on
-              Robinhood testnet.
+              Every mint is a seat. The NFT Account can hold {tokenLabel()} and
+              other NFTs. Perks bought for that seat stay with it when it moves.
+              Most seats claim 1,000 {tokenLabel()}; a few are marked with a
+              larger grant that also travels with the NFT.
             </p>
+            <div className="mt-6">
+              <SeatPitch variant="compact" />
+            </div>
             <h3 className="mt-10 text-lg font-semibold">NFTs</h3>
             {nfts.length === 0 && !collection.isLoading ? (
               <EmptyState
@@ -176,9 +182,10 @@ export function CollectionView() {
           <div>
             <h2 className="text-2xl font-semibold">{tokenLabel()}</h2>
             <p className="text-sm text-text-secondary">
-              Each NFT can claim 1,000 {tokenLabel()} once into its NFT Account.
-              After that, 10% APY accrues only on remaining original principal —
-              withdrawing cuts rewards, transferring more in does not restore them.
+              Each NFT can claim genesis {tokenLabel()} once into its NFT Account
+              (1,000 on most seats, more on marked ones). After that, 10% APY
+              accrues only on remaining original principal — withdrawing cuts
+              rewards, transferring more in does not restore them.
             </p>
             <p className="mt-3 tabular text-3xl font-semibold">
               {formatTokenAmount(tokenSupply)}

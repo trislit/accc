@@ -3,13 +3,13 @@ import { ACTIVE_CHAIN_ID, CANONICAL_TBA_REGISTRY } from "./chain";
 
 /** Robinhood testnet (46630). Public addresses, safe to bake into the static export. */
 export const LIVE_NFT =
-  "0xdcbC12c8ebe5cD0E24B414F51283F7afE0d35cA5" as Address;
+  "0xB740c4bef629d15A4B3058368E6CBC807dbC0357" as Address;
 export const LIVE_TOKEN =
-  "0xc153e32f7f0dBe3131FECcC598a1EA57C64c5A99" as Address;
+  "0x9e73FB99E42C520A305b570159a6f7DD2B227Ac3" as Address;
 export const LIVE_DISTRIBUTOR =
-  "0x56deD1a8d70893113Cff4289e204B142d4ce5eDA" as Address;
+  "0x3448096b67f3459EE2458c3618Db57a47ca602cD" as Address;
 export const LIVE_ARCADE =
-  "0xE3D58B7BA09d1F4f5007C394EEe2694f54f91BcE" as Address;
+  "0xc5bA7541CFB9d4F4f6e131d95acC8f246b86F77b" as Address;
 const LIVE_TBA_IMPL =
   "0x8A0455E86536F57323866ed13c26febAb8ae3049" as Address;
 
@@ -24,9 +24,10 @@ export const liveContracts = true;
 export const project = {
   name: "ACCC",
   fullName: "Anti-Cabal Cabal Club",
-  tagline: "Anti-Cabal Cabal Club on Robinhood Chain.",
+  tagline:
+    "An NFT that holds its own bag. What it earns and unlocks travel with it.",
   description:
-    "ACCC is the Anti-Cabal Cabal Club. Mint a membership NFT. Each one has an NFT Account that can hold $ACCC.",
+    "ACCC is the Anti-Cabal Cabal Club. Mint a membership NFT. Each one has an account that can hold $ACCC and other NFTs. Spend into perks locked to that seat — they move when the NFT moves.",
   collectionName: "Anti-Cabal Cabal Club",
   collectionId: "accc",
   nftSymbol: "ACCC",

@@ -22,6 +22,7 @@ contract AcccArcadeTest is Test {
         registry = new ERC6551Registry();
         implementation = new ERC6551Account();
         nft = new AcccNft(address(registry), address(implementation));
+        nft.setPaused(false);
         distributor = new AcccDistributor(address(nft));
         token = distributor.token();
         arcade = new AcccArcade(address(nft), address(distributor));
