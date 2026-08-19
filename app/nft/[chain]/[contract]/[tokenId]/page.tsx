@@ -1,12 +1,27 @@
 import { redirect } from "next/navigation";
-import { LIVE_NFT } from "@/lib/project";
 import { fetchLiveCollection } from "@/lib/data/scanCollection";
+import { LIVE_NFT, project } from "@/lib/project";
 import { accountPath } from "@/lib/tba";
+
+function fallbackParams() {
+  return [
+    {
+      chain: String(project.chainId),
+      contract: LIVE_NFT,
+      tokenId: "1",
+    },
+    {
+      chain: String(project.chainId),
+      contract: LIVE_NFT.toLowerCase(),
+      tokenId: "1",
+    },
+  ];
+}
 
 export async function generateStaticParams() {
   try {
     const collection = await fetchLiveCollection();
-    return collection.nfts.flatMap((nft) => [
+    const params = collection.nfts.flatMap((nft) => [
       {
         chain: String(nft.chainId),
         contract: nft.contract,
@@ -18,8 +33,9 @@ export async function generateStaticParams() {
         tokenId: nft.tokenId,
       },
     ]);
+    return params.length > 0 ? params : fallbackParams();
   } catch {
-    return [];
+    return fallbackParams();
   }
 }
 
