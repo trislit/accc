@@ -8,6 +8,8 @@ export const LIVE_TOKEN =
   "0xc153e32f7f0dBe3131FECcC598a1EA57C64c5A99" as Address;
 export const LIVE_DISTRIBUTOR =
   "0x56deD1a8d70893113Cff4289e204B142d4ce5eDA" as Address;
+export const LIVE_ARCADE =
+  "0x50a79A2f412a84f82EDF49379192eD266E6a3Eae" as Address;
 const LIVE_TBA_IMPL =
   "0x8A0455E86536F57323866ed13c26febAb8ae3049" as Address;
 
@@ -34,6 +36,7 @@ export const project = {
   chainId: ACTIVE_CHAIN_ID,
   nftContract: LIVE_NFT,
   tokenContract: LIVE_TOKEN,
+  arcadeContract: envAddress(process.env.NEXT_PUBLIC_ARCADE, LIVE_ARCADE),
   tbaImplementation: envAddress(
     process.env.NEXT_PUBLIC_TBA_IMPLEMENTATION,
     LIVE_TBA_IMPL,

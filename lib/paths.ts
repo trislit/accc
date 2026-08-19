@@ -16,6 +16,8 @@ export function mintPath(dropId?: string) {
   return dropId ? `/mint/?id=${encodeURIComponent(dropId)}` : "/mint/";
 }
 
+export { arcadePath } from "./arcade";
+
 export function planPath() {
   return "/plan/";
 }

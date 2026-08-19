@@ -27,6 +27,15 @@
     "href": "/collection/"
   },
   {
+    "id": "arcade",
+    "name": "Arcade",
+    "summary": "Inner-circle Handshake cabinet. Keep genesis $ACCC in the NFT Account to enter; spend harvested $ACCC for a mark.",
+    "group": "club",
+    "status": "live",
+    "access": { "nft": 1, "genesis": 1 },
+    "href": "/arcade/"
+  },
+  {
     "id": "tokensmart",
     "name": "TokenSmart desktop",
     "summary": "Open TokenSmart in a new tab. Anyone can sign in; holding ACCC NFTs or $ACCC on this wallet unlocks extra programs and rooms there.",

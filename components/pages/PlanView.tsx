@@ -7,6 +7,7 @@ const sections = [
   { id: "thesis", label: "Thesis" },
   { id: "join", label: "How you join" },
   { id: "accrual", label: "Accrual" },
+  { id: "play", label: "Play" },
   { id: "buyback", label: "33% buyback" },
   { id: "tools", label: "Tools" },
   { id: "roadmap", label: "Roadmap" },
@@ -170,6 +171,29 @@ export function PlanView() {
             for the same {token} that earning NFTs still hold.
           </p>
         </div>
+      </section>
+
+      <section id="play" className="scroll-mt-36 space-y-4">
+        <h2 className="text-2xl font-semibold">Play with the harvest, not the seat</h2>
+        <p className="text-sm leading-7 text-text-secondary">
+          The NFT is an inner-circle seat. Leaving original genesis {token} in
+          its account keeps you inside and accruing. Arcade cabinets spend
+          harvested {token} — surplus or wallet chips — for marks and games.
+          The seat never pays. {token} that hits a cabinet leaves circulation.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Note title="Hold to stay">
+            Keep genesis {token} in the NFT Account. Emptying it locks the
+            arcade and zeros 10% APY.
+          </Note>
+          <Note title="Spend to play">
+            Harvest, then spend surplus. Handshake costs 10 {token} per play
+            and returns a mark, never more token.
+          </Note>
+        </div>
+        <Link href="/arcade/">
+          <Button>Open arcade</Button>
+        </Link>
       </section>
 
       <section id="buyback" className="scroll-mt-36 space-y-4">
@@ -449,6 +473,10 @@ export function PlanView() {
               <tr>
                 <td className="px-4 py-3">This public plan page</td>
                 <td className="px-4 py-3 text-forge-green">Live</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3">Arcade Handshake sink (10 {token} / play)</td>
+                <td className="px-4 py-3 text-forge-green">Live (testnet)</td>
               </tr>
               <tr>
                 <td className="px-4 py-3">Launch stack used on ACCC itself</td>

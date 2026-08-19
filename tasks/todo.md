@@ -1,18 +1,20 @@
-# ACCC — Live mint stats
+# ACCC — Cabal arcade sink
 
-- [x] Mint page reads AcccNft `totalSupply` / `nextId` via the testnet public client
-- [x] Collection scan uses ERC-721 enumerable `tokenByIndex` instead of mock `minted: 0`
-- [x] Drop card uses live minted count; no fake per-wallet cap
-- [x] `/held` mock holdings redirect to `/portfolio`
+- [x] AcccArcade.sol + tests (inner circle, 10 $ACCC sink, marks, no principal ratchet)
+- [x] Deployed on Robinhood testnet `0x50a79A2f412a84f82EDF49379192eD266E6a3Eae`
+- [x] TBA $ACCC withdraw capped to harvested surplus
+- [x] `/arcade/?tokenId=` Handshake cabinet
+- [x] Marks on NFT cards; Arcade in tools catalog
+- [x] Plan page Play note
 
 ## Review
 
-The mint page showed **0 minted** because it treated a wagmi `nextId` miss as zero, and the drop catalog still had `minted: 0`. AcccNft on testnet currently has `nextId = 2` and `totalSupply = 2` (token ids 1 and 2).
-
-The contract has no supply cap and no max-per-wallet, so the UI now shows open supply and the live `totalSupply`. Marketplace buy/list on `NftView` is still a showcase (that page redirects to `/account`).
+The NFT is the inner-circle seat. Genesis `$ACCC` that stays in the NFT Account unlocks Handshake. Plays spend 10 `$ACCC` from the owner wallet (harvest surplus, then withdraw only surplus). Marks are cosmetic; no `$ACCC` comes back.
 
 ## How to verify
 
-1. Open `/mint/` — Minted should be **2** (or current `totalSupply`), not 0
-2. Home and `/collection/` list both NFTs
-3. Mint another token; the count increments after the receipt
+1. Own an ACCC NFT, claim genesis, wait or warp isn't possible on testnet — harvest if any yield, or use wallet `$ACCC`
+2. `/account/?tokenId=` withdraw Max on `$ACCC` should not exceed surplus (full 1,000 genesis stays)
+3. `/arcade/?tokenId=` — Inner circle badge, Approve, Play
+4. Collection card shows Handshake / Silver / Gold after a play
+5. `/tools/` Arcade is live and gated on NFT + genesis held

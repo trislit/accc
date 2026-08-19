@@ -209,6 +209,26 @@ export const acccTokenAbi = [
     ],
     outputs: [{ name: "", type: "bool" }],
   },
+  {
+    type: "function",
+    name: "approve",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "allowance",
+    stateMutability: "view",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
 ] as const;
 
 export const acccDistributorAbi = [
@@ -267,5 +287,53 @@ export const acccDistributorAbi = [
     stateMutability: "nonpayable",
     inputs: [{ name: "tokenId", type: "uint256" }],
     outputs: [],
+  },
+] as const;
+
+export const acccArcadeAbi = [
+  {
+    type: "function",
+    name: "PLAY_COST",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "markOf",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint8" }],
+  },
+  {
+    type: "function",
+    name: "playsOf",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "spendable",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "play",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "event",
+    name: "Played",
+    inputs: [
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "player", type: "address", indexed: true },
+      { name: "mark", type: "uint8", indexed: false },
+      { name: "plays", type: "uint256", indexed: false },
+    ],
   },
 ] as const;

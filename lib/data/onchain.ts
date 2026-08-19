@@ -7,8 +7,9 @@ import {
   ROBINHOOD_TESTNET_ID,
   acccPublicClient,
 } from "../chain";
-import { acccDistributorAbi, acccNftAbi, acccTokenAbi } from "../contracts";
+import { acccArcadeAbi, acccDistributorAbi, acccNftAbi, acccTokenAbi } from "../contracts";
 import {
+  LIVE_ARCADE,
   LIVE_DISTRIBUTOR,
   LIVE_NFT,
   LIVE_TOKEN,
@@ -202,6 +203,84 @@ export function useAcccMintStats(owner?: Address) {
     owned: query.data?.owned ?? 0,
     isLoading: query.isLoading || query.isFetching,
     error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
+  };
+}
+
+export function useArcadeStatus(tokenId?: string) {
+  const query = useQuery({
+    queryKey: ["accc-arcade", ROBINHOOD_TESTNET_ID, LIVE_ARCADE, tokenId],
+    enabled: Boolean(liveContracts && LIVE_ARCADE && tokenId),
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!tokenId) throw new Error("No token");
+      const id = BigInt(tokenId);
+      const [mark, plays, spendable, cost] = await Promise.all([
+        acccPublicClient.readContract({
+          address: LIVE_ARCADE,
+          abi: acccArcadeAbi,
+          functionName: "markOf",
+          args: [id],
+        }),
+        acccPublicClient.readContract({
+          address: LIVE_ARCADE,
+          abi: acccArcadeAbi,
+          functionName: "playsOf",
+          args: [id],
+        }),
+        acccPublicClient.readContract({
+          address: LIVE_ARCADE,
+          abi: acccArcadeAbi,
+          functionName: "spendable",
+          args: [id],
+        }),
+        acccPublicClient.readContract({
+          address: LIVE_ARCADE,
+          abi: acccArcadeAbi,
+          functionName: "PLAY_COST",
+        }),
+      ]);
+      return {
+        mark: Number(mark),
+        plays: Number(plays),
+        spendable: Number(formatUnits(spendable, 18)),
+        cost: Number(formatUnits(cost, 18)),
+      };
+    },
+  });
+
+  return {
+    mark: query.data?.mark ?? 0,
+    plays: query.data?.plays ?? 0,
+    spendable: query.data?.spendable ?? 0,
+    cost: query.data?.cost ?? 10,
+    isLoading: query.isLoading || query.isFetching,
+    error: query.error instanceof Error ? query.error.message : undefined,
+    refetch: query.refetch,
+  };
+}
+
+export function useTokenAllowance(owner?: Address, spender?: Address) {
+  const query = useQuery({
+    queryKey: ["accc-allowance", ROBINHOOD_TESTNET_ID, LIVE_TOKEN, owner, spender],
+    enabled: Boolean(liveContracts && owner && spender),
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!owner || !spender) throw new Error("No allowance pair");
+      return acccPublicClient.readContract({
+        address: LIVE_TOKEN,
+        abi: acccTokenAbi,
+        functionName: "allowance",
+        args: [owner, spender],
+      });
+    },
+  });
+
+  return {
+    wei: query.data,
+    formatted:
+      query.data !== undefined ? Number(formatUnits(query.data, 18)) : undefined,
+    isLoading: query.isLoading || query.isFetching,
     refetch: query.refetch,
   };
 }

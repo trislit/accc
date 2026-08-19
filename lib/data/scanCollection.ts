@@ -1,7 +1,8 @@
 import { formatEther, formatUnits, parseAbiItem, zeroAddress } from "viem";
+import { arcadeMarkLabel, arcadePath } from "../arcade";
 import { ROBINHOOD_TESTNET_ID, acccPublicClient } from "../chain";
-import { acccNftAbi, acccTokenAbi } from "../contracts";
-import { LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "../project";
+import { acccArcadeAbi, acccNftAbi, acccTokenAbi } from "../contracts";
+import { LIVE_ARCADE, LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "../project";
 import { accountPath } from "../tba";
 import type { ActivityItem, Address, CollectionNFT, TokenAsset } from "../types";
 
@@ -10,6 +11,9 @@ const nftTransferEvent = parseAbiItem(
 );
 const erc20TransferEvent = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 value)",
+);
+const playedEvent = parseAbiItem(
+  "event Played(uint256 indexed tokenId, address indexed player, uint8 mark, uint256 plays)",
 );
 
 function acccAsset(balance: number): TokenAsset {
@@ -35,7 +39,7 @@ function ethAsset(balance: number): TokenAsset {
 }
 
 export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
-  const [owner, tba] = await Promise.all([
+  const [owner, tba, arcade] = await Promise.all([
     acccPublicClient.readContract({
       address: LIVE_NFT,
       abi: acccNftAbi,
@@ -48,6 +52,22 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
       functionName: "accountOf",
       args: [tokenId],
     }),
+    LIVE_ARCADE
+      ? Promise.all([
+          acccPublicClient.readContract({
+            address: LIVE_ARCADE,
+            abi: acccArcadeAbi,
+            functionName: "markOf",
+            args: [tokenId],
+          }),
+          acccPublicClient.readContract({
+            address: LIVE_ARCADE,
+            abi: acccArcadeAbi,
+            functionName: "playsOf",
+            args: [tokenId],
+          }),
+        ]).catch(() => [0, BigInt(0)] as const)
+      : Promise.resolve([0, BigInt(0)] as const),
   ]);
   const [acccWei, ethWei] = await Promise.all([
     acccPublicClient.readContract({
@@ -63,6 +83,8 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
   const eth = Number(formatEther(ethWei));
   const assets: TokenAsset[] = [acccAsset(accc)];
   if (eth > 0) assets.unshift(ethAsset(eth));
+  const arcadeMark = Number(arcade[0]);
+  const arcadePlays = Number(arcade[1]);
 
   return {
     chainId: ROBINHOOD_TESTNET_ID,
@@ -77,6 +99,8 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
     artId: "wanderer-775",
     listed: false,
     traits: [],
+    arcadeMark: arcadeMark || undefined,
+    arcadePlays: arcadePlays || undefined,
     nftAccount: {
       address: tba,
       nft: { contract: LIVE_NFT, tokenId: id },
@@ -134,7 +158,7 @@ async function scanMintedTokenIds(): Promise<bigint[]> {
 }
 
 async function fetchActivity(tbas: Set<string>): Promise<ActivityItem[]> {
-  const [nftLogs, tokenLogs] = await Promise.all([
+  const [nftLogs, tokenLogs, arcadeLogs] = await Promise.all([
     acccPublicClient.getLogs({
       address: LIVE_NFT,
       event: nftTransferEvent,
@@ -147,6 +171,14 @@ async function fetchActivity(tbas: Set<string>): Promise<ActivityItem[]> {
       fromBlock: BigInt(0),
       toBlock: "latest",
     }),
+    LIVE_ARCADE
+      ? acccPublicClient.getLogs({
+          address: LIVE_ARCADE,
+          event: playedEvent,
+          fromBlock: BigInt(0),
+          toBlock: "latest",
+        })
+      : Promise.resolve([]),
   ]);
 
   const items: ActivityItem[] = [];
@@ -191,6 +223,22 @@ async function fetchActivity(tbas: Set<string>): Promise<ActivityItem[]> {
       to,
       amount: label,
       at: `Block ${log.blockNumber}`,
+    });
+  }
+
+  for (const log of arcadeLogs) {
+    const tokenId = String(log.args.tokenId);
+    const mark = arcadeMarkLabel(Number(log.args.mark));
+    if (!log.args.tokenId || !log.args.player) continue;
+    items.push({
+      id: `${log.transactionHash}-arcade`,
+      type: "Arcade",
+      title: mark
+        ? `${project.nftPrefix} #${tokenId} earned ${mark}`
+        : `${project.nftPrefix} #${tokenId} played Handshake`,
+      from: log.args.player,
+      at: `Block ${log.blockNumber}`,
+      href: arcadePath(tokenId),
     });
   }
 

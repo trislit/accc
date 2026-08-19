@@ -267,6 +267,11 @@ function AccountInner() {
                 Transfer to NFT
               </Button>
             ) : null}
+            {isOwner && dist.claimed ? (
+              <Link href={`/arcade/?tokenId=${encodeURIComponent(tokenId)}`}>
+                <Button variant="secondary">Arcade</Button>
+              </Link>
+            ) : null}
             <Link href="/mint/">
               <Button variant="secondary">Mint another</Button>
             </Link>
@@ -290,6 +295,7 @@ function AccountInner() {
           account={account}
           isOwner={isOwner}
           live
+          acccPrincipal={dist.claimed ? eligible : 0}
           onTransfer={() => {
             void tbaToken.refetch();
             void tbaEth.refetch();

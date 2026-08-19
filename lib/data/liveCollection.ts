@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ROBINHOOD_TESTNET_ID } from "../chain";
-import { LIVE_DISTRIBUTOR, LIVE_NFT, LIVE_TOKEN } from "../project";
+import { LIVE_ARCADE, LIVE_DISTRIBUTOR, LIVE_NFT, LIVE_TOKEN } from "../project";
 import { fetchLiveCollection } from "./scanCollection";
 
 export { fetchAcccNft, fetchAcccMintStats, fetchLiveCollection } from "./scanCollection";
@@ -16,6 +16,7 @@ export function useLiveCollection() {
       LIVE_NFT,
       LIVE_TOKEN,
       LIVE_DISTRIBUTOR,
+      LIVE_ARCADE,
     ],
     queryFn: fetchLiveCollection,
     refetchOnMount: "always",

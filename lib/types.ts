@@ -69,6 +69,8 @@ export type CollectionNFT = {
   artId: string;
   listed: boolean;
   traits: Trait[];
+  arcadeMark?: number;
+  arcadePlays?: number;
   market?: {
     listing?: Listing;
     bestOffer?: Offer;
@@ -89,7 +91,8 @@ export type ActivityItem = {
     | "Token withdrawal"
     | "NFT deposit"
     | "NFT withdrawal"
-    | "Token claim";
+    | "Token claim"
+    | "Arcade";
   title: string;
   from?: Address;
   to?: Address;

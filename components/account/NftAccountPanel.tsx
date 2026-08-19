@@ -16,12 +16,14 @@ export function NftAccountPanel({
   isOwner,
   compact = false,
   live = false,
+  acccPrincipal,
   onTransfer,
 }: {
   account: NftAccount;
   isOwner?: boolean;
   compact?: boolean;
   live?: boolean;
+  acccPrincipal?: number;
   onTransfer?: () => void;
 }) {
   const [depositOpen, setDepositOpen] = useState(false);
@@ -139,6 +141,7 @@ export function NftAccountPanel({
             open={withdrawOpen}
             mode="withdraw"
             tba={account.address}
+            acccPrincipal={acccPrincipal}
             onClose={() => setWithdrawOpen(false)}
             onSuccess={onTransfer}
           />
