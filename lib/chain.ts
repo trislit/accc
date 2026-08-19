@@ -81,11 +81,10 @@ export async function acccTxFees() {
       ? block.baseFeePerGas
       : gasPrice;
   const safe = base > MIN_BASE_FEE_WEI ? base : MIN_BASE_FEE_WEI;
-  const maxPriorityFeePerGas =
-    safe / BigInt(10) > BigInt(0) ? safe / BigInt(10) : BigInt(1);
   return {
-    maxFeePerGas: safe * BigInt(3) + maxPriorityFeePerGas,
-    maxPriorityFeePerGas,
+    type: "legacy" as const,
+    gas: BigInt(1_200_000),
+    gasPrice: safe * BigInt(2),
   };
 }
 

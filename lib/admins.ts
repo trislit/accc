@@ -2,7 +2,7 @@ import { isAddressLike } from "./format";
 import type { Address } from "./types";
 
 const DEFAULT_ADMIN =
-  "0x3872ff66dF4b9570F4e58FB1234a717dFe1334a9" as Address;
+  "0x727D38f876014CedA468569aE446Ea989745a4FC" as Address;
 
 export function adminAddresses(): Address[] {
   const raw = process.env.NEXT_PUBLIC_ADMINS ?? DEFAULT_ADMIN;
