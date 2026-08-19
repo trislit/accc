@@ -8,7 +8,7 @@ import {
   useOnchainTransaction,
 } from "@/components/tx/TransactionStatus";
 import { Button } from "@/components/ui/Button";
-import { robinhoodTestnet } from "@/lib/chain";
+import { acccTxFees, robinhoodTestnet } from "@/lib/chain";
 import { acccDistributorAbi, acccNftAbi } from "@/lib/contracts";
 import { useAcccMintStats, useGrantOf } from "@/lib/data/onchain";
 import { formatTokenAmount } from "@/lib/format";
@@ -46,7 +46,7 @@ export function CoreSeats() {
   }
 
   function pause(paused: boolean) {
-    sendNft(paused ? "Pause public mint" : "Open public mint", (walletClient) =>
+    sendNft(paused ? "Pause public mint" : "Open public mint", async (walletClient) =>
       walletClient.writeContract({
         address: LIVE_NFT,
         abi: acccNftAbi,
@@ -54,6 +54,7 @@ export function CoreSeats() {
         args: [paused],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       }),
     );
   }
@@ -61,7 +62,7 @@ export function CoreSeats() {
   function reserve(on: boolean) {
     const id = Number(tokenId);
     if (!Number.isInteger(id) || id < 1) return;
-    sendNft(on ? `Reserve #${id}` : `Release #${id}`, (walletClient) =>
+    sendNft(on ? `Reserve #${id}` : `Release #${id}`, async (walletClient) =>
       walletClient.writeContract({
         address: LIVE_NFT,
         abi: acccNftAbi,
@@ -69,6 +70,7 @@ export function CoreSeats() {
         args: [BigInt(id), on],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       }),
     );
   }
@@ -90,6 +92,7 @@ export function CoreSeats() {
         args: [BigInt(id), parseUnits(String(value), 18)],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, refetch);
   }
@@ -98,7 +101,7 @@ export function CoreSeats() {
     const id = Number(tokenId);
     if (!Number.isInteger(id) || id < 1) return;
     if (!isAddress(wallet)) return;
-    sendNft(`Mint core #${id}`, (walletClient) =>
+    sendNft(`Mint core #${id}`, async (walletClient) =>
       walletClient.writeContract({
         address: LIVE_NFT,
         abi: acccNftAbi,
@@ -106,6 +109,7 @@ export function CoreSeats() {
         args: [wallet, BigInt(id)],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       }),
     );
   }

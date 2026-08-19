@@ -15,7 +15,7 @@ import { SeatPitch } from "@/components/pitch/SeatPitch";
 import { Button } from "@/components/ui/Button";
 import { ConnectModal } from "@/components/wallet/WalletControls";
 import { acccNftAbi } from "@/lib/contracts";
-import { activeChain, explorerAddressUrl } from "@/lib/chain";
+import { acccTxFees, activeChain, explorerAddressUrl } from "@/lib/chain";
 import { useAcccMintStats, useGrantOf } from "@/lib/data/onchain";
 import { formatTokenAmount } from "@/lib/format";
 import { LIVE_NFT, project } from "@/lib/project";
@@ -80,6 +80,7 @@ export function DropView({ drop }: { drop: Drop }) {
         functionName: "mint",
         chain: activeChain,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, (receipt) => {
       const tokenId = tokenIdFromMintReceipt(receipt);

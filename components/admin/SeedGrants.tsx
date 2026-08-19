@@ -8,7 +8,7 @@ import {
   useOnchainTransaction,
 } from "@/components/tx/TransactionStatus";
 import { Button } from "@/components/ui/Button";
-import { robinhoodTestnet } from "@/lib/chain";
+import { acccTxFees, robinhoodTestnet } from "@/lib/chain";
 import { acccDistributorAbi } from "@/lib/contracts";
 import { useAcccMintStats, useGrantOf } from "@/lib/data/onchain";
 import { formatTokenAmount } from "@/lib/format";
@@ -42,6 +42,7 @@ export function SeedGrants() {
         args: [parseUnits(String(value), 18), BigInt(n)],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, () => {
       void nextGrant.refetch();
@@ -66,6 +67,7 @@ export function SeedGrants() {
         args: [BigInt(id), parseUnits(String(value), 18)],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, () => {
       void nextGrant.refetch();

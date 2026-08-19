@@ -24,7 +24,7 @@ import {
   ownsSkin,
   skinById,
 } from "@/lib/arcade";
-import { robinhoodTestnet } from "@/lib/chain";
+import { acccTxFees, robinhoodTestnet } from "@/lib/chain";
 import { acccArcadeAbi, acccTokenAbi } from "@/lib/contracts";
 import {
   useAcccBalance,
@@ -98,6 +98,7 @@ function ArcadeInner() {
         args: [LIVE_ARCADE, parseUnits("100", 18)],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, refetchAll);
   }
@@ -116,6 +117,7 @@ function ArcadeInner() {
         args: [BigInt(tokenId), skinId],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, refetchAll);
   }
@@ -134,6 +136,7 @@ function ArcadeInner() {
         args: [BigInt(tokenId), skinId],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, refetchAll);
   }

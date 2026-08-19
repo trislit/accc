@@ -17,7 +17,7 @@ import { AccountBadge, Badge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Tabs";
 import { artIdForSkin } from "@/lib/arcade";
-import { robinhoodTestnet } from "@/lib/chain";
+import { acccTxFees, robinhoodTestnet } from "@/lib/chain";
 import { acccDistributorAbi } from "@/lib/contracts";
 import {
   useAcccBalance,
@@ -130,6 +130,7 @@ function AccountInner() {
         args: [BigInt(tokenId)],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }, () => {
       void tbaToken.refetch();

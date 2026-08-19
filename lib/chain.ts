@@ -11,6 +11,16 @@ export const ACTIVE_CHAIN_ID = ROBINHOOD_TESTNET_ID;
 const TESTNET_RPC = "https://rpc.testnet.chain.robinhood.com";
 const MAINNET_RPC = "https://rpc.mainnet.chain.robinhood.com";
 
+/** Orbit reports 0 priority fee; wallets then sign maxFeePerGas = 10 wei. */
+const MIN_BASE_FEE_WEI = BigInt(10_000_000);
+
+function orbitFees() {
+  return {
+    baseFeeMultiplier: 2 as const,
+    maxPriorityFeePerGas: BigInt(1_000_000),
+  };
+}
+
 export const robinhoodChain = defineChain({
   id: ROBINHOOD_CHAIN_ID,
   name: "Robinhood Chain",
@@ -26,6 +36,7 @@ export const robinhoodChain = defineChain({
       address: "0xcA11bde05977b3631167020862bE2a173976CA11",
     },
   },
+  fees: orbitFees(),
 });
 
 export const robinhoodTestnet = defineChain({
@@ -46,6 +57,8 @@ export const robinhoodTestnet = defineChain({
       address: "0xa432504b6F04Cafe775b09D8AA92e8dbe41Ec7a8",
     },
   },
+  testnet: true,
+  fees: orbitFees(),
 });
 
 export const activeChain = robinhoodTestnet;
@@ -56,6 +69,25 @@ export const acccPublicClient = createPublicClient({
   chain: robinhoodTestnet,
   transport: http(TESTNET_RPC),
 });
+
+/** Fees wallets will actually accept on Robinhood (base fee ~0.01 gwei). */
+export async function acccTxFees() {
+  const [gasPrice, block] = await Promise.all([
+    acccPublicClient.getGasPrice(),
+    acccPublicClient.getBlock({ blockTag: "latest" }),
+  ]);
+  const base =
+    block.baseFeePerGas && block.baseFeePerGas > BigInt(0)
+      ? block.baseFeePerGas
+      : gasPrice;
+  const safe = base > MIN_BASE_FEE_WEI ? base : MIN_BASE_FEE_WEI;
+  const maxPriorityFeePerGas =
+    safe / BigInt(10) > BigInt(0) ? safe / BigInt(10) : BigInt(1);
+  return {
+    maxFeePerGas: safe * BigInt(3) + maxPriorityFeePerGas,
+    maxPriorityFeePerGas,
+  };
+}
 
 export function explorerAddressUrl(address: string) {
   return `${activeChain.blockExplorers.default.url}/address/${address}`;

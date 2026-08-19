@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { acccTokenAbi, erc6551AccountAbi } from "@/lib/contracts";
-import { robinhoodTestnet } from "@/lib/chain";
+import { acccTxFees, robinhoodTestnet } from "@/lib/chain";
 import { useAcccBalance, useNativeEthBalance } from "@/lib/data/onchain";
 import { formatEth, formatTokenAmount } from "@/lib/format";
 import { LIVE_TOKEN, tokenLabel } from "@/lib/project";
@@ -85,6 +85,7 @@ export function TransferModal({
           value,
           chain: robinhoodTestnet,
           account: walletClient.account,
+          ...(await acccTxFees()),
         });
       }
       return walletClient.writeContract({
@@ -94,6 +95,7 @@ export function TransferModal({
         args: [address, value, "0x", 0],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }
 
@@ -106,6 +108,7 @@ export function TransferModal({
         args: [tba, value],
         chain: robinhoodTestnet,
         account: walletClient.account,
+        ...(await acccTxFees()),
       });
     }
     return walletClient.writeContract({
@@ -124,6 +127,7 @@ export function TransferModal({
       ],
       chain: robinhoodTestnet,
       account: walletClient.account,
+      ...(await acccTxFees()),
     });
   }
 
