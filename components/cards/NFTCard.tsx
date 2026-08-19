@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { arcadeMarkLabel } from "@/lib/arcade";
 import { Atmosphere } from "@/components/art/Atmosphere";
 import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
 import { formatTokenAmount } from "@/lib/format";
@@ -16,7 +15,6 @@ function containedAccc(nft: CollectionNFT) {
 
 export function NFTCard({ nft, href }: { nft: CollectionNFT; href?: string }) {
   const accc = containedAccc(nft);
-  const mark = arcadeMarkLabel(nft.arcadeMark);
   return (
     <Link
       href={href ?? nftPath(nft)}
@@ -37,7 +35,6 @@ export function NFTCard({ nft, href }: { nft: CollectionNFT; href?: string }) {
             </p>
           ) : null}
           <p className="text-xs text-text-muted">
-            {mark ? `${mark} · ` : ""}
             {nft.listed ? "Listed" : "Minted"}
             {nft.nftAccount ? " · NFT Account" : ""}
           </p>

@@ -248,8 +248,8 @@ export function TransferModal({
                 {formatTokenAmount(genesisTaken)} genesis {tokenLabel()} leaves
                 the seat. Earning principal falls to{" "}
                 {formatTokenAmount(remainingPrincipal)} {tokenLabel()}. 10% APY
-                will not come back if you deposit later, and arcade unlocks need
-                genesis still in the account. You can still do this.
+                will not come back if you deposit later, and wallpaper shop
+                needs genesis still in the account. You can still do this.
               </p>
             </div>
           ) : null}

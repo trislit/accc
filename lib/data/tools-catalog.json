@@ -29,7 +29,7 @@
   {
     "id": "arcade",
     "name": "Arcade",
-    "summary": "Inner-circle Handshake cabinet. Keep genesis $ACCC in the NFT Account to enter; spend harvested $ACCC for a mark.",
+    "summary": "Snake and memory are free. Inner-circle members spend harvested $ACCC on wallpapers for the seat.",
     "group": "club",
     "status": "live",
     "access": { "nft": 1, "genesis": 1 },

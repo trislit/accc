@@ -9,7 +9,7 @@ export const LIVE_TOKEN =
 export const LIVE_DISTRIBUTOR =
   "0x56deD1a8d70893113Cff4289e204B142d4ce5eDA" as Address;
 export const LIVE_ARCADE =
-  "0x50a79A2f412a84f82EDF49379192eD266E6a3Eae" as Address;
+  "0xE3D58B7BA09d1F4f5007C394EEe2694f54f91BcE" as Address;
 const LIVE_TBA_IMPL =
   "0x8A0455E86536F57323866ed13c26febAb8ae3049" as Address;
 

@@ -293,24 +293,34 @@ export const acccDistributorAbi = [
 export const acccArcadeAbi = [
   {
     type: "function",
-    name: "PLAY_COST",
+    name: "SKIN_COST",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
-    name: "markOf",
+    name: "wallpaperOf",
     stateMutability: "view",
     inputs: [{ name: "tokenId", type: "uint256" }],
     outputs: [{ name: "", type: "uint8" }],
   },
   {
     type: "function",
-    name: "playsOf",
+    name: "skinMask",
     stateMutability: "view",
     inputs: [{ name: "tokenId", type: "uint256" }],
     outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "ownsSkin",
+    stateMutability: "view",
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "skinId", type: "uint8" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
   },
   {
     type: "function",
@@ -321,19 +331,40 @@ export const acccArcadeAbi = [
   },
   {
     type: "function",
-    name: "play",
+    name: "buySkin",
     stateMutability: "nonpayable",
-    inputs: [{ name: "tokenId", type: "uint256" }],
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "skinId", type: "uint8" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "wearSkin",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "skinId", type: "uint8" },
+    ],
     outputs: [],
   },
   {
     type: "event",
-    name: "Played",
+    name: "SkinBought",
     inputs: [
       { name: "tokenId", type: "uint256", indexed: true },
-      { name: "player", type: "address", indexed: true },
-      { name: "mark", type: "uint8", indexed: false },
-      { name: "plays", type: "uint256", indexed: false },
+      { name: "buyer", type: "address", indexed: true },
+      { name: "skinId", type: "uint8", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "SkinWorn",
+    inputs: [
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "wearer", type: "address", indexed: true },
+      { name: "skinId", type: "uint8", indexed: false },
     ],
   },
 ] as const;

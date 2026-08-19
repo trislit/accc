@@ -16,7 +16,7 @@ This is **not** TwinForge. TwinForge stays the factory.
 - `/mint` genesis drop
 - `/nft/...` NFT + NFT Account + buy/list (showcase catalog)
 - `/account?tokenId=` live ERC-6551 account (claim / harvest / transfer / withdraw)
-- `/arcade?tokenId=` Handshake cabinet (inner-circle $ACCC sink)
+- `/arcade?tokenId=` arcade (free games + $ACCC wallpaper skins)
 - `/portfolio` ACCC holdings
 - `/plan` public pitch and go-to-market
 - `/tools` gated club tools (NFT, $ACCC total, genesis still in the NFT Account)
@@ -62,7 +62,7 @@ Copy `.env.example` to `.env.local` for local overrides. Cloudflare Git builds u
 | `NEXT_PUBLIC_NFT` | Live AcccNft address |
 | `NEXT_PUBLIC_TOKEN` | Live AcccToken address |
 | `NEXT_PUBLIC_DISTRIBUTOR` | Live AcccDistributor (per-NFT genesis + yield) |
-| `NEXT_PUBLIC_ARCADE` | Live AcccArcade (Handshake sink) |
+| `NEXT_PUBLIC_ARCADE` | Live AcccArcade (wallpaper sink) |
 | `NEXT_PUBLIC_TBA_IMPLEMENTATION` | Live ERC6551Account implementation |
 | `NEXT_PUBLIC_ADMINS` | Comma-separated wallets that can open `/admin` |
 | `NEXT_PUBLIC_TELEGRAM` | Member Telegram URL (makes the Telegram tool live) |

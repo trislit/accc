@@ -1,20 +1,20 @@
-# ACCC — Cabal arcade sink
+# ACCC — Arcade wallpapers
 
-- [x] AcccArcade.sol + tests (inner circle, 10 $ACCC sink, marks, no principal ratchet)
-- [x] Deployed on Robinhood testnet `0x50a79A2f412a84f82EDF49379192eD266E6a3Eae`
-- [x] TBA $ACCC withdraw capped to harvested surplus
-- [x] `/arcade/?tokenId=` Handshake cabinet
-- [x] Marks on NFT cards; Arcade in tools catalog
-- [x] Plan page Play note
+- [x] AcccArcade.sol + tests (inner circle, 10 $ACCC skins, no principal ratchet)
+- [x] Redeployed on Robinhood testnet `0xE3D58B7BA09d1F4f5007C394EEe2694f54f91BcE`
+- [x] Wired `LIVE_ARCADE` / `NEXT_PUBLIC_ARCADE`
+- [x] `/arcade/?tokenId=` snake + memory (free) and wallpaper shop
+- [x] Collection + account art follows equipped wallpaper
+- [x] Plan page Play note: games free, spend harvest on skins
 
 ## Review
 
-The NFT is the inner-circle seat. Genesis `$ACCC` that stays in the NFT Account unlocks Handshake. Plays spend 10 `$ACCC` from the owner wallet (harvest surplus, then withdraw only surplus). Marks are cosmetic; no `$ACCC` comes back.
+Games are free client-side (snake, memory). The sink is wallpaper: 10 `$ACCC` from the owner wallet, inner-circle only (`eligiblePrincipal > 0`). Skin 0 is free. Equipped wallpaper skins the board and the NFT art.
 
 ## How to verify
 
-1. Own an ACCC NFT, claim genesis, wait or warp isn't possible on testnet — harvest if any yield, or use wallet `$ACCC`
-2. `/account/?tokenId=` withdraw Max on `$ACCC` should not exceed surplus (full 1,000 genesis stays)
-3. `/arcade/?tokenId=` — Inner circle badge, Approve, Play
-4. Collection card shows Handshake / Silver / Gold after a play
+1. Own an ACCC NFT, claim genesis, keep it in the NFT Account
+2. `/arcade/?tokenId=` — play snake / memory without a tx
+3. Harvest surplus (or use wallet `$ACCC`), Approve, buy a wallpaper
+4. Collection + account atmosphere match the equipped skin
 5. `/tools/` Arcade is live and gated on NFT + genesis held

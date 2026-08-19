@@ -1,5 +1,5 @@
 import { formatEther, formatUnits, parseAbiItem, zeroAddress } from "viem";
-import { arcadeMarkLabel, arcadePath } from "../arcade";
+import { arcadePath, artIdForSkin, skinById } from "../arcade";
 import { ROBINHOOD_TESTNET_ID, acccPublicClient } from "../chain";
 import { acccArcadeAbi, acccNftAbi, acccTokenAbi } from "../contracts";
 import { LIVE_ARCADE, LIVE_NFT, LIVE_TOKEN, project, tokenLabel } from "../project";
@@ -12,8 +12,8 @@ const nftTransferEvent = parseAbiItem(
 const erc20TransferEvent = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 );
-const playedEvent = parseAbiItem(
-  "event Played(uint256 indexed tokenId, address indexed player, uint8 mark, uint256 plays)",
+const skinBoughtEvent = parseAbiItem(
+  "event SkinBought(uint256 indexed tokenId, address indexed buyer, uint8 skinId)",
 );
 
 function acccAsset(balance: number): TokenAsset {
@@ -53,21 +53,15 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
       args: [tokenId],
     }),
     LIVE_ARCADE
-      ? Promise.all([
-          acccPublicClient.readContract({
+      ? acccPublicClient
+          .readContract({
             address: LIVE_ARCADE,
             abi: acccArcadeAbi,
-            functionName: "markOf",
+            functionName: "wallpaperOf",
             args: [tokenId],
-          }),
-          acccPublicClient.readContract({
-            address: LIVE_ARCADE,
-            abi: acccArcadeAbi,
-            functionName: "playsOf",
-            args: [tokenId],
-          }),
-        ]).catch(() => [0, BigInt(0)] as const)
-      : Promise.resolve([0, BigInt(0)] as const),
+          })
+          .catch(() => 0)
+      : Promise.resolve(0),
   ]);
   const [acccWei, ethWei] = await Promise.all([
     acccPublicClient.readContract({
@@ -83,8 +77,7 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
   const eth = Number(formatEther(ethWei));
   const assets: TokenAsset[] = [acccAsset(accc)];
   if (eth > 0) assets.unshift(ethAsset(eth));
-  const arcadeMark = Number(arcade[0]);
-  const arcadePlays = Number(arcade[1]);
+  const wallpaper = Number(arcade);
 
   return {
     chainId: ROBINHOOD_TESTNET_ID,
@@ -96,11 +89,10 @@ export async function fetchAcccNft(tokenId: bigint): Promise<CollectionNFT> {
     owner,
     name: `${project.nftPrefix} #${id}`,
     description: `${project.nftPrefix} #${id} from ${project.collectionName}.`,
-    artId: "wanderer-775",
+    artId: artIdForSkin(wallpaper),
     listed: false,
     traits: [],
-    arcadeMark: arcadeMark || undefined,
-    arcadePlays: arcadePlays || undefined,
+    arcadeWallpaper: wallpaper || undefined,
     nftAccount: {
       address: tba,
       nft: { contract: LIVE_NFT, tokenId: id },
@@ -174,7 +166,7 @@ async function fetchActivity(tbas: Set<string>): Promise<ActivityItem[]> {
     LIVE_ARCADE
       ? acccPublicClient.getLogs({
           address: LIVE_ARCADE,
-          event: playedEvent,
+          event: skinBoughtEvent,
           fromBlock: BigInt(0),
           toBlock: "latest",
         })
@@ -228,15 +220,13 @@ async function fetchActivity(tbas: Set<string>): Promise<ActivityItem[]> {
 
   for (const log of arcadeLogs) {
     const tokenId = String(log.args.tokenId);
-    const mark = arcadeMarkLabel(Number(log.args.mark));
-    if (!log.args.tokenId || !log.args.player) continue;
+    const skin = skinById(Number(log.args.skinId));
+    if (!log.args.tokenId || !log.args.buyer) continue;
     items.push({
       id: `${log.transactionHash}-arcade`,
       type: "Arcade",
-      title: mark
-        ? `${project.nftPrefix} #${tokenId} earned ${mark}`
-        : `${project.nftPrefix} #${tokenId} played Handshake`,
-      from: log.args.player,
+      title: `${project.nftPrefix} #${tokenId} bought ${skin.name}`,
+      from: log.args.buyer,
       at: `Block ${log.blockNumber}`,
       href: arcadePath(tokenId),
     });

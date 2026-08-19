@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: `Arcade · ${project.name}`,
-  description: "Inner-circle Handshake cabinet. Spend harvested $ACCC for a mark.",
+  description: "Free snake and memory. Spend harvested $ACCC on seat wallpapers.",
 };
 
 export default function ArcadePage() {

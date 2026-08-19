@@ -215,17 +215,17 @@ export function useArcadeStatus(tokenId?: string) {
     queryFn: async () => {
       if (!tokenId) throw new Error("No token");
       const id = BigInt(tokenId);
-      const [mark, plays, spendable, cost] = await Promise.all([
+      const [wallpaper, mask, spendable, cost] = await Promise.all([
         acccPublicClient.readContract({
           address: LIVE_ARCADE,
           abi: acccArcadeAbi,
-          functionName: "markOf",
+          functionName: "wallpaperOf",
           args: [id],
         }),
         acccPublicClient.readContract({
           address: LIVE_ARCADE,
           abi: acccArcadeAbi,
-          functionName: "playsOf",
+          functionName: "skinMask",
           args: [id],
         }),
         acccPublicClient.readContract({
@@ -237,12 +237,12 @@ export function useArcadeStatus(tokenId?: string) {
         acccPublicClient.readContract({
           address: LIVE_ARCADE,
           abi: acccArcadeAbi,
-          functionName: "PLAY_COST",
+          functionName: "SKIN_COST",
         }),
       ]);
       return {
-        mark: Number(mark),
-        plays: Number(plays),
+        wallpaper: Number(wallpaper),
+        mask: Number(mask),
         spendable: Number(formatUnits(spendable, 18)),
         cost: Number(formatUnits(cost, 18)),
       };
@@ -250,8 +250,8 @@ export function useArcadeStatus(tokenId?: string) {
   });
 
   return {
-    mark: query.data?.mark ?? 0,
-    plays: query.data?.plays ?? 0,
+    wallpaper: query.data?.wallpaper ?? 0,
+    mask: query.data?.mask ?? 0,
     spendable: query.data?.spendable ?? 0,
     cost: query.data?.cost ?? 10,
     isLoading: query.isLoading || query.isFetching,

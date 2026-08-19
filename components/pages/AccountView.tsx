@@ -16,10 +16,12 @@ import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { AccountBadge, VerifiedBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Tabs";
+import { artIdForSkin } from "@/lib/arcade";
 import { robinhoodTestnet } from "@/lib/chain";
 import { acccDistributorAbi } from "@/lib/contracts";
 import {
   useAcccBalance,
+  useArcadeStatus,
   useDistributorStatus,
   useNativeEthBalance,
   useNftOwner,
@@ -53,6 +55,7 @@ function AccountInner() {
   const tbaEth = useNativeEthBalance(tbaQuery.address);
   const tbaToken = useAcccBalance(tbaQuery.address);
   const dist = useDistributorStatus(tokenId || undefined);
+  const arcade = useArcadeStatus(tokenId || undefined);
   const distTx = useOnchainTransaction();
   const [completeTitle, setCompleteTitle] = useState("Done");
   const [completeBody, setCompleteBody] = useState("");
@@ -197,7 +200,7 @@ function AccountInner() {
     <div className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Atmosphere
-          id="wanderer-775"
+          id={artIdForSkin(arcade.wallpaper)}
           className="aspect-square w-full"
           rounded="rounded-lg"
         />
@@ -269,7 +272,7 @@ function AccountInner() {
             ) : null}
             {isOwner && dist.claimed ? (
               <Link href={`/arcade/?tokenId=${encodeURIComponent(tokenId)}`}>
-                <Button variant="secondary">Arcade</Button>
+                <Button variant="secondary">Play arcade</Button>
               </Link>
             ) : null}
             <Link href="/mint/">

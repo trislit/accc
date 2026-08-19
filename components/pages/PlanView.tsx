@@ -178,17 +178,18 @@ export function PlanView() {
         <p className="text-sm leading-7 text-text-secondary">
           The NFT is an inner-circle seat. Leaving original genesis {token} in
           its account keeps you inside and accruing. Arcade cabinets spend
-          harvested {token} — surplus or wallet chips — for marks and games.
-          The seat never pays. {token} that hits a cabinet leaves circulation.
+          harvested {token} — surplus or wallet chips — for wallpapers.
+          Games are free. The seat never pays. {token} that hits the shop
+          leaves circulation.
         </p>
         <div className="grid gap-4 md:grid-cols-2">
           <Note title="Hold to stay">
             Keep genesis {token} in the NFT Account. Emptying it locks the
-            arcade and zeros 10% APY.
+            wallpaper shop and zeros 10% APY.
           </Note>
-          <Note title="Spend to play">
-            Harvest, then spend surplus. Handshake costs 10 {token} per play
-            and returns a mark, never more token.
+          <Note title="Spend on wallpapers">
+            Games are free. 10 {token} buys a wallpaper for the seat. Harvest
+            surplus, never the genesis grant, if you want to keep earning.
           </Note>
         </div>
         <Link href="/arcade/">
@@ -475,7 +476,7 @@ export function PlanView() {
                 <td className="px-4 py-3 text-forge-green">Live</td>
               </tr>
               <tr>
-                <td className="px-4 py-3">Arcade Handshake sink (10 {token} / play)</td>
+                <td className="px-4 py-3">Arcade wallpapers (10 {token} / skin)</td>
                 <td className="px-4 py-3 text-forge-green">Live (testnet)</td>
               </tr>
               <tr>
